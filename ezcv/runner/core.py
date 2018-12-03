@@ -11,7 +11,10 @@ class Runner(object):
         self.operators = collections.OrderedDict()
 
     def run(self, img: np.ndarray):
-        ...
+        last = img
+        for name, operator in self.operators.items():
+            last = operator.run(last)
+        return last
 
     def add_operator(self, name: str, operator: Operator):
         self.operators[name] = operator

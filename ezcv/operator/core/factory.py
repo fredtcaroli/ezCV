@@ -4,7 +4,7 @@ from ezcv.config.PipelineConfig_pb2 import OperatorConfig
 from ezcv.classpath import class_from_fully_qualified_name
 from ezcv.operator.core import Operator
 from ezcv.operator.core.parameter import Parameter
-from ezcv.operator.core.parameter_adaptor import get_adapter
+from ezcv.operator.core.parameter_adapter import get_adapter
 
 
 def create_operator(config: OperatorConfig) -> Operator:
