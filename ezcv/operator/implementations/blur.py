@@ -1,7 +1,7 @@
 import cv2
 
-from .core import Operator
-from .core.parameter import IntegerParameter, NumberParameter
+from ..core import Operator
+from ..core.parameter import IntegerParameter, NumberParameter
 
 
 class GaussianBlur(Operator):

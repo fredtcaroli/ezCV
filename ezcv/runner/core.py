@@ -2,7 +2,8 @@ import collections
 import numpy as np
 from typing import TextIO
 
-from ezcv.config.PipelineConfig_pb2 import PipelineConfig
+import yaml
+
 from ezcv.operator.core import create_operator, Operator
 
 
@@ -21,9 +22,9 @@ class Runner(object):
 
     @staticmethod
     def load(stream: TextIO) -> "Runner":
-        pipeline_config = PipelineConfig.ParseFromString(stream)
+        pipeline_config = yaml.load(stream)
         runner = Runner()
-        for op_config in pipeline_config.operators:
-            op = create_operator(op_config)
-            runner.add_operator(op.name, op)
+        for op_config in pipeline_config['pipeline']:
+            op = create_operator(op_config['config'])
+            runner.add_operator(op_config['name'], op)
         return runner
