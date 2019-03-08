@@ -4,7 +4,7 @@ TBD
 
 ### Installing
 
-`pythons setup.py install`
+`python setup.py install`
 
 
 ### Configs
