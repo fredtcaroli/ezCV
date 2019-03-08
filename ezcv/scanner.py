@@ -30,5 +30,4 @@ def get_available_operators() -> Set[Operator]:
             raise ValueError('Packages inside ezcv.operator.implementations are not supported yet')
     if Operator in collected:
         collected.remove(Operator)
-    print('called')
     return collected
