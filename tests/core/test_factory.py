@@ -74,7 +74,7 @@ def test_create_operator_fail_missing_params(config):
 
 
 def test_create_operator_invalid_implementation(config):
-    config['implementation'] = 'this.is.not.an.operator'
+    config['implementation'] = 'not.an.operator'
 
     with pytest.raises(ValueError) as e:
         create_operator(config)
