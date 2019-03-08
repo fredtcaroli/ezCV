@@ -5,7 +5,7 @@ import pkgutil
 from typing import Set
 
 import ezcv.operator.implementations
-from ezcv.operator.core import Operator
+from ezcv.operator import Operator
 
 
 def __cache_once(wrapped):

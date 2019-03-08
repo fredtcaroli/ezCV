@@ -2,8 +2,8 @@ import inspect
 from typing import Iterator
 
 from ezcv.classpath import class_from_fully_qualified_name
-from . import Operator
-from .parameter import Parameter
+from ezcv.operator.core.operator import Operator
+from ezcv.operator.core.parameter import Parameter
 
 
 def create_operator(config: dict) -> Operator:

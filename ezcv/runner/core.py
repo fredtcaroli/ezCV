@@ -4,7 +4,7 @@ from typing import TextIO
 
 import yaml
 
-from ezcv.operator.core import create_operator, Operator
+from ezcv.operator import create_operator, Operator
 
 
 class Runner(object):

@@ -1,7 +1,6 @@
 import cv2
 
-from ..core import Operator
-from ..core.parameter import IntegerParameter, NumberParameter
+from ezcv.operator.core import Operator, IntegerParameter, NumberParameter
 
 
 class GaussianBlur(Operator):
