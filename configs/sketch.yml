@@ -1,13 +1,13 @@
-version: '0.0'
+version: 0.0
 
 pipeline:
-  - name: "Blur1"
+  - name: Blur1
     config:
       implementation: ezcv.operator.implementations.blur.GaussianBlur
       params:
         kernel_size: 3
         sigma: 1.5
-  - name: "Blur2"
+  - name: Blur2
     config:
       implementation: ezcv.operator.implementations.blur.GaussianBlur
       params:
