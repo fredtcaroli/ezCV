@@ -1,5 +1,5 @@
 import functools
-from typing import Any, Tuple, Callable
+from typing import Tuple, Callable
 
 import numpy as np
 import pytest
@@ -12,14 +12,6 @@ def build_img(size: Tuple[int, ...], kind='random') -> np.ndarray:
         return np.zeros(size, dtype='uint8')
     elif kind == 'white':
         return np.full(size, 255, dtype='uint8')
-
-
-def is_image(data: Any):
-    return (
-        isinstance(data, np.ndarray) and
-        (data.ndim == 2 or data.ndim == 3) and
-        (data.ndim == 2 or data.shape[2] == 3)
-    )
 
 
 def parametrize_img(func: Callable = None, include_valid: bool = True, include_invalid: bool = False,

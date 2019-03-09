@@ -2,7 +2,8 @@ import numpy as np
 import pytest
 
 from ezcv.operator.implementations.blur import GaussianBlur
-from tests.utils import is_image, parametrize_img, build_img
+from tests.utils import parametrize_img, build_img
+from ezcv.utils import is_image
 
 
 @pytest.fixture

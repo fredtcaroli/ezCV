@@ -4,7 +4,8 @@ from typing import TextIO
 
 import yaml
 
-from ezcv.operator import create_operator, Operator
+import ezcv.operator as op_lib
+import ezcv.utils as utils
 
 
 class Runner(object):
@@ -12,19 +13,29 @@ class Runner(object):
         self.operators = collections.OrderedDict()
 
     def run(self, img: np.ndarray):
+        self._raise_if_invalid_img(img)
         last = img
         for name, operator in self.operators.items():
             last = operator.run(last)
         return last
 
-    def add_operator(self, name: str, operator: Operator):
+    def _raise_if_invalid_img(self, img: np.ndarray):
+        if not utils.is_image(img):
+            raise ValueError('Invalid image provided')
+
+    def add_operator(self, name: str, operator: op_lib.Operator) -> None:
+        self._raise_if_name_is_unavailable(name)
         self.operators[name] = operator
+
+    def _raise_if_name_is_unavailable(self, name: str):
+        if name in self.operators:
+            raise ValueError('Trying to add a duplicated name: %s' % name)
 
     @staticmethod
     def load(stream: TextIO) -> "Runner":
         pipeline_config = yaml.load(stream)
         runner = Runner()
         for op_config in pipeline_config['pipeline']:
-            op = create_operator(op_config['config'])
-            runner.add_operator(op_config['name'], op)
+            operator = op_lib.create_operator(op_config['config'])
+            runner.add_operator(op_config['name'], operator)
         return runner
