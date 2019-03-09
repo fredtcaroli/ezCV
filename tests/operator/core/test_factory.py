@@ -1,5 +1,6 @@
 from typing import Any
 
+import numpy as np
 import pytest
 from pytest import fixture
 
@@ -21,9 +22,12 @@ class TestOperator(Operator):
     param2 = NumberParameter()
     non_param = unique_object
 
+    def run(self, img: np.ndarray) -> np.ndarray:
+        raise NotImplementedError()
+
 
 @fixture
-def config(shared_datadir):
+def config():
     config = {
         'implementation': __name__ + '.TestOperator',
         'params': {
