@@ -22,6 +22,7 @@ class IntegerParameter(Parameter[int]):
         return config
 
     def to_config(self, value: int) -> Any:
+        assert isinstance(value, int)
         return value
 
 
@@ -31,4 +32,5 @@ class NumberParameter(Parameter[float]):
         return config
 
     def to_config(self, value: float) -> Any:
-        return value
+        assert isinstance(value, (float, int))
+        return float(value)
