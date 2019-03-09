@@ -34,7 +34,7 @@ def test_gaussian_blur_run_leave_input_untouched(blur_op, img):
 
 
 def test_gaussian_blur_run_indicator_that_works(blur_op):
-    img = build_img((301, 301), kind='black')
+    img = build_img((301, 301), rgb=False, kind='black')
     img[150, ...] = 255
     blurred = blur_op.run(img)
     assert np.all(blurred[150, ...] < 255)
