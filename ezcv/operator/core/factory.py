@@ -25,6 +25,8 @@ def create_operator(config: dict) -> Operator:
             parsed_value = parameters[name].from_config(param_config)
         except KeyError:
             raise ValueError('Invalid param specified trying to instantiate %s: "%s"' % (fqn, name))
+        except AssertionError:
+            raise ValueError('%s failed to parse value \'%s\'' % (str(type(parameters[name])), str(param_config)))
         setattr(op, name, parsed_value)
 
     return op
