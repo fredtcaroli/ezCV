@@ -16,8 +16,7 @@ class Runner(object):
     def run(self, img: np.ndarray) -> Tuple[np.ndarray, PipelineContext]:
         self._raise_if_invalid_img(img)
         last = img
-        ctx = PipelineContext()
-        ctx.original_img = img
+        ctx = PipelineContext(img)
         for name, operator in self.operators.items():
             last = operator.run(last, ctx)
             if not utils.is_image(last):

@@ -17,7 +17,7 @@ def blur_op():
 
 @pytest.fixture
 def ctx():
-    return PipelineContext()
+    return PipelineContext(build_img((16, 16)))
 
 
 @parametrize_img

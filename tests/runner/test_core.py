@@ -1,4 +1,5 @@
 from io import StringIO
+from typing import Any
 from unittest.mock import patch, ANY, call
 
 import numpy as np
@@ -157,7 +158,7 @@ def test_runner_run_all_ops(img, config_stream):
 ])
 def test_runner_run_check_op_return(return_value):
     class TestWrongReturnOperator(Operator):
-        def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
+        def run(self, img: np.ndarray, ctx: PipelineContext) -> Any:
             return return_value
 
     runner = Runner()
@@ -176,13 +177,31 @@ def test_runner_run_set_ctx_original_img():
 
     class TestCtxOriginalImgOperator(Operator):
         def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
-            assert np.all(ctx.original_img == img)
+            assert np.all(ctx.original_img() == img)
             return img
 
     runner = Runner()
     runner.add_operator('test_op', TestCtxOriginalImgOperator())
     runner.run(img_rgb)
     runner.run(img_gray)
+
+
+def test_runner_run_doesnt_alter_original_img():
+    img = build_img((128, 128), kind='black')
+
+    class TestCtxOriginalImg(Operator):
+        def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
+            original_img = ctx.original_img()
+            original_img[10, ...] = 255
+            return img
+
+    runner = Runner()
+    before = img.copy()
+    runner.add_operator('test_op', TestCtxOriginalImg())
+    runner.run(img)
+    after = img
+
+    assert np.all(before == after)
 
 
 @parametrize_img(kind='black')
