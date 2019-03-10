@@ -144,6 +144,31 @@ def test_runner_run_all_ops(img, config_stream):
         assert mock.call_count == 2
 
 
+@pytest.mark.parametrize('return_value', [
+    np.random.randint(0, 256, size=(16, 16), dtype='int64'),
+    np.random.randint(0, 256, size=(0, 16), dtype='uint8'),
+    np.random.randint(0, 256, size=(16, 0), dtype='uint8'),
+    np.random.randint(0, 256, size=(0, 0), dtype='uint8'),
+    np.random.randint(0, 256, size=(16, 16, 2), dtype='uint8'),
+    10,
+    None,
+    object(),
+    np.random.randint(0, 256, size=(10,), dtype='uint8')
+])
+def test_runner_run_check_op_return(return_value):
+    class TestWrongReturnOperator(Operator):
+        def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
+            return return_value
+
+    runner = Runner()
+    runner.add_operator('test_op', TestWrongReturnOperator())
+
+    with pytest.raises(ValueError) as e:
+        runner.run(build_img((16, 16)))
+
+    msg = str(e).lower()
+    assert 'return' in msg and 'invalid' in msg
+
 
 def test_runner_run_set_ctx_original_img():
     img_rgb = build_img((128, 128), rgb=True)
