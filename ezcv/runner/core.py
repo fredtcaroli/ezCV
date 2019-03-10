@@ -12,7 +12,7 @@ class Runner(object):
     def __init__(self):
         self.operators = collections.OrderedDict()
 
-    def run(self, img: np.ndarray):
+    def run(self, img: np.ndarray) -> np.ndarray:
         self._raise_if_invalid_img(img)
         last = img
         for name, operator in self.operators.items():
@@ -23,7 +23,7 @@ class Runner(object):
         if not utils.is_image(img):
             raise ValueError('Invalid image provided')
 
-    def add_operator(self, name: str, operator: op_lib.Operator) -> None:
+    def add_operator(self, name: str, operator: op_lib.Operator):
         self._raise_if_name_is_unavailable(name)
         self.operators[name] = operator
 
