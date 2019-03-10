@@ -6,10 +6,10 @@ import yaml
 
 import ezcv.operator as op_lib
 import ezcv.utils as utils
-from ezcv.runner.context import PipelineContext
+from ezcv.pipeline.context import PipelineContext
 
 
-class Runner(object):
+class CompVizPipeline(object):
     def __init__(self):
         self.operators = collections.OrderedDict()
 
@@ -36,9 +36,9 @@ class Runner(object):
             raise ValueError('Trying to add a duplicated name: %s' % name)
 
     @staticmethod
-    def load(stream: TextIO) -> "Runner":
+    def load(stream: TextIO) -> "CompVizPipeline":
         pipeline_config = yaml.load(stream)
-        runner = Runner()
+        runner = CompVizPipeline()
         for op_config in pipeline_config['pipeline']:
             operator = op_lib.create_operator(op_config['config'])
             runner.add_operator(op_config['name'], operator)

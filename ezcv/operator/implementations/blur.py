@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 from ezcv.operator.core import Operator, IntegerParameter, NumberParameter
-from ezcv.runner.context import PipelineContext
+from ezcv.pipeline.context import PipelineContext
 
 
 class GaussianBlur(Operator):

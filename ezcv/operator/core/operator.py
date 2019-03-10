@@ -1,6 +1,6 @@
 import numpy as np
 
-from ezcv.runner.context import PipelineContext
+from ezcv.pipeline.context import PipelineContext
 
 
 class Operator(object):

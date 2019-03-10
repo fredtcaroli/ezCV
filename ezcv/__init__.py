@@ -1,1 +1,1 @@
-from .runner import Runner
+from .pipeline import CompVizPipeline
