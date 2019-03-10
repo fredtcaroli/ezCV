@@ -177,7 +177,7 @@ def test_pipeline_run_set_ctx_original_img():
 
     class TestCtxOriginalImgOperator(Operator):
         def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
-            assert np.all(ctx.original_img() == img)
+            assert np.all(ctx.original_img == img)
             return img
 
     pipeline = CompVizPipeline()
@@ -191,7 +191,7 @@ def test_pipeline_run_doesnt_alter_original_img():
 
     class TestCtxOriginalImg(Operator):
         def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
-            original_img = ctx.original_img()
+            original_img = ctx.original_img
             original_img[10, ...] = 255
             return img
 

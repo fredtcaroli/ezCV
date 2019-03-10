@@ -18,7 +18,8 @@ class CompVizPipeline(object):
         last = img
         ctx = PipelineContext(img)
         for name, operator in self.operators.items():
-            last = operator.run(last, ctx)
+            with ctx.scope(name):
+                last = operator.run(last, ctx)
             if not utils.is_image(last):
                 raise ValueError('Invalid return value from "%s": "%s"' % (name, str(last)))
         return last, ctx
