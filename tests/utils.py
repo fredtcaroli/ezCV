@@ -1,5 +1,5 @@
 import functools
-from typing import Tuple, Callable
+from typing import Tuple, Callable, List
 
 import numpy as np
 import pytest
@@ -49,3 +49,9 @@ def parametrize_img(func: Callable = None, include_valid: bool = True, include_i
         return wrapper
     else:
         return wrapper(func)
+
+
+def assert_terms_in_exception(e: "ExceptionInfo", terms: List[str]):
+    msg = str(e).lower()
+    for term in terms:
+        assert term.lower().strip() in msg

@@ -204,6 +204,43 @@ def test_pipeline_run_doesnt_alter_original_img():
     assert np.all(before == after)
 
 
+def test_pipeline_run_add_info_works():
+    info_name = 'info_name'
+    info_value = object()
+
+    class TestCtxAddInfo(Operator):
+        def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
+            ctx.add_info(info_name, info_value)
+            return img
+
+    pipeline = CompVizPipeline()
+    op_name1 = 'test_op1'
+    pipeline.add_operator(op_name1, TestCtxAddInfo())
+    op_name2 = 'test_op2'
+    pipeline.add_operator(op_name2, TestCtxAddInfo())
+
+    out, ctx = pipeline.run(build_img((16, 16)))
+
+    assert ctx.info == {
+        op_name1: {
+            info_name: info_value
+        },
+        op_name2: {
+            info_name: info_value
+        }
+    }
+
+
+def test_pipeline_run_empty_info(config_stream):
+    pipeline = CompVizPipeline.load(config_stream)
+    img = build_img((16, 16))
+    out, ctx = pipeline.run(img)
+    assert ctx.info == {
+        'op1': {},
+        'op2': {}
+    }
+
+
 @parametrize_img(kind='black')
 def test_pipeline_integration(img):
     # this test doesn't work if we can't blur something
