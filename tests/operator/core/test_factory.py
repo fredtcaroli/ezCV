@@ -4,11 +4,10 @@ import numpy as np
 import pytest
 from pytest import fixture
 
-from ezcv.operator import T
 from ezcv.operator.core.factory import create_operator
 from ezcv.operator.core.operator import Operator
 from ezcv.operator.core.parameter import IntegerParameter, NumberParameter, Parameter
-
+from ezcv.pipeline import PipelineContext
 
 unique_object = object()
 
@@ -18,7 +17,7 @@ class TestOperator(Operator):
     param2 = NumberParameter()
     non_param = unique_object
 
-    def run(self, img: np.ndarray) -> np.ndarray:
+    def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
         raise NotImplementedError()
 
 
@@ -115,7 +114,7 @@ def test_create_operator_invalid_parameter_value(config):
 
     class FailingParameter(Parameter):
 
-        def to_config(self, value: T) -> Any:
+        def to_config(self, value: Any) -> Any:
             raise NotImplementedError()
 
         def from_config(self, config: Any) -> None:

@@ -5,7 +5,7 @@ from typing import TextIO, Tuple
 import yaml
 
 import ezcv.operator as op_lib
-import ezcv.utils as utils
+from ezcv import utils
 from ezcv.pipeline.context import PipelineContext
 
 

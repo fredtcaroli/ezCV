@@ -1,2 +1,2 @@
-from .core import CompVizPipeline
 from .context import PipelineContext
+from .core import CompVizPipeline
