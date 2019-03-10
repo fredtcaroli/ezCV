@@ -6,39 +6,44 @@ import pytest
 
 from ezcv import Runner
 from ezcv.operator import Operator, IntegerParameter, NumberParameter
-from tests.utils import parametrize_img
+from ezcv.runner.context import PipelineContext
+from tests.utils import parametrize_img, build_img
 from ezcv.utils import is_image
 
 
 class TestOperator(Operator):
-    def run(self, img: np.ndarray) -> np.ndarray:
+    def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
         return img + 1
 
     param1 = IntegerParameter()
     param2 = NumberParameter()
 
 
-@pytest.fixture
-def config_stream():
+def get_config_stream():
     config = """
-    version: 0.0
+        version: 0.0
 
-    pipeline:
-      - name: op1
-        config:
-          implementation: {operator}
-          params:
-            param1: 3
-            param2: 1.5
-      - name: op2
-        config:
-          implementation: {operator}
-          params:
-            param1: 5
-            param2: 1
-    """.format(operator=__name__ + '.TestOperator')
+        pipeline:
+          - name: op1
+            config:
+              implementation: {operator}
+              params:
+                param1: 3
+                param2: 1.5
+          - name: op2
+            config:
+              implementation: {operator}
+              params:
+                param1: 5
+                param2: 1
+        """.format(operator=__name__ + '.TestOperator')
     stream = StringIO(config)
     return stream
+
+
+@pytest.fixture
+def config_stream():
+    return get_config_stream()
 
 
 def test_runner_load_return(config_stream):
@@ -103,17 +108,14 @@ def test_runner_add_operator_duplicated_name():
 
 
 @parametrize_img
-def test_runner_run_return(img, config_stream):
-    runner = Runner.load(config_stream)
+@pytest.mark.parametrize('runner', [Runner(), Runner.load(get_config_stream())])
+def test_runner_run_return(img, runner):
     r = runner.run(img)
-    assert is_image(r)
-
-
-@parametrize_img
-def test_empty_runner_run_return(img):
-    runner = Runner()
-    r = runner.run(img)
-    assert is_image(r)
+    assert isinstance(r, tuple)
+    assert len(r) == 2
+    out, ctx = r
+    assert is_image(out)
+    assert isinstance(ctx, PipelineContext)
 
 
 @parametrize_img(include_valid=False, include_invalid=True)
@@ -129,14 +131,62 @@ def test_runner_run_invalid_img(img):
 @parametrize_img(kind='black')
 def test_runner_run_result(img, config_stream):
     runner = Runner.load(config_stream)
-    outp = runner.run(img)
-    assert np.all(outp == 2)
+    out, ctx = runner.run(img)
+    assert np.all(out == 2)
 
 
 @parametrize_img
 def test_runner_run_all_ops(img, config_stream):
     with patch(__name__ + '.TestOperator.run') as mock:
-        mock.side_effect = lambda img: img
+        mock.side_effect = lambda img, ctx: img
         runner = Runner.load(config_stream)
         _ = runner.run(img)
         assert mock.call_count == 2
+
+
+
+def test_runner_run_set_ctx_original_img():
+    img_rgb = build_img((128, 128), rgb=True)
+    img_gray = build_img((128, 128), rgb=False)
+
+    class TestCtxOriginalImgOperator(Operator):
+        def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
+            assert np.all(ctx.original_img == img)
+            return img
+
+    runner = Runner()
+    runner.add_operator('test_op', TestCtxOriginalImgOperator())
+    runner.run(img_rgb)
+    runner.run(img_gray)
+
+
+@parametrize_img(kind='black')
+def test_runner_integration(img):
+    # this test doesn't work if we can't blur something
+    if img.shape[:2] == (1, 1):
+        return
+
+    config = """
+        version: 0.0
+        
+        pipeline:
+          - name: Blur1
+            config:
+              implementation: ezcv.operator.implementations.blur.GaussianBlur
+              params:
+                kernel_size: 3
+                sigma: 1.5
+          - name: Blur2
+            config:
+              implementation: ezcv.operator.implementations.blur.GaussianBlur
+              params:
+                kernel_size: 5
+                sigma: 1
+    """
+    stream = StringIO(config)
+    runner = Runner.load(stream)
+
+    mid_index = img.shape[0] // 2
+    img[mid_index, ...] = 255
+    out, ctx = runner.run(img)
+    assert np.all(out[mid_index, ...] < 255)

@@ -1,23 +1,26 @@
 import collections
 import numpy as np
-from typing import TextIO
+from typing import TextIO, Tuple
 
 import yaml
 
 import ezcv.operator as op_lib
 import ezcv.utils as utils
+from ezcv.runner.context import PipelineContext
 
 
 class Runner(object):
     def __init__(self):
         self.operators = collections.OrderedDict()
 
-    def run(self, img: np.ndarray) -> np.ndarray:
+    def run(self, img: np.ndarray) -> Tuple[np.ndarray, PipelineContext]:
         self._raise_if_invalid_img(img)
         last = img
+        ctx = PipelineContext()
+        ctx.original_img = img
         for name, operator in self.operators.items():
-            last = operator.run(last)
-        return last
+            last = operator.run(last, ctx)
+        return last, ctx
 
     def _raise_if_invalid_img(self, img: np.ndarray):
         if not utils.is_image(img):

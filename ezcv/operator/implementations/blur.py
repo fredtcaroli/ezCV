@@ -1,6 +1,8 @@
 import cv2
+import numpy as np
 
 from ezcv.operator.core import Operator, IntegerParameter, NumberParameter
+from ezcv.runner.context import PipelineContext
 
 
 class GaussianBlur(Operator):
@@ -12,6 +14,6 @@ class GaussianBlur(Operator):
     kernel_size = IntegerParameter()
     sigma = NumberParameter()
 
-    def run(self, img):
+    def run(self, img: np.ndarray, ctx: PipelineContext):
         odd_kernel_size = self.kernel_size - ((self.kernel_size + 1) % 2)
         return cv2.GaussianBlur(img, (odd_kernel_size, odd_kernel_size), self.sigma)

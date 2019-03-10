@@ -10,10 +10,6 @@ from ezcv.operator.core.operator import Operator
 from ezcv.operator.core.parameter import IntegerParameter, NumberParameter, Parameter
 
 
-class UniqueObjectClass(object):
-    pass
-
-
 unique_object = object()
 
 
