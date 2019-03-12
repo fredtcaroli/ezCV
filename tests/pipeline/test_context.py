@@ -28,43 +28,11 @@ def test_pipeline_context_original_img(original_img, ctx):
     assert np.all(original_img == ctx.original_img)
 
 
-def test_pipeline_context_keeps_changes_to_original_img_inside_default_scope(ctx):
-    reference = ctx.original_img.copy()
-    new = build_img(ctx.original_img.shape[:2])
-    ctx.original_img[:] = new
-    assert not np.array_equal(reference, ctx.original_img) and np.array_equal(ctx.original_img, new)
+def test_pipeline_context_original_img_read_only(ctx):
+    with pytest.raises(ValueError) as e:
+        ctx.original_img[:] = 0
 
-
-def test_pipeline_context_keeps_changes_to_original_img_inside_same_scope(ctx):
-    with ctx.scope('test_scope'):
-        new = build_img(ctx.original_img.shape[:2])
-        ctx.original_img[:] = new
-        assert np.array_equal(ctx.original_img, new)
-
-
-def test_pipeline_context_separates_original_imgs_per_scope(ctx):
-    scope_img = build_img(ctx.original_img.shape[:2])
-    reference = ctx.original_img.copy()
-
-    with ctx.scope('test_scope'):
-        ctx.original_img[:] = scope_img
-
-    with ctx.scope('different_test_scope'):
-        assert np.array_equal(ctx.original_img, reference)
-
-    assert np.array_equal(ctx.original_img, reference)
-
-
-def test_pipeline_context_scoped_original_img_handles_nested_calls(ctx):
-    outer_img = build_img(ctx.original_img.shape[:2])
-    inner_img = build_img(ctx.original_img.shape[:2])
-    reference = ctx.original_img.copy()
-    with ctx.scope('outer'):
-        ctx.original_img[:] = outer_img
-        with ctx.scope('inner'):
-            assert np.array_equal(ctx.original_img, reference)
-            ctx.original_img[:] = inner_img
-        assert np.array_equal(ctx.original_img, outer_img)
+    assert_terms_in_exception(e, ['read-only'])
 
 
 def test_pipeline_context_scope_runs(ctx):

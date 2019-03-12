@@ -8,7 +8,7 @@ import pytest
 from ezcv import CompVizPipeline
 from ezcv.operator import Operator, IntegerParameter, NumberParameter
 from ezcv.pipeline.context import PipelineContext
-from tests.utils import parametrize_img, build_img
+from tests.utils import parametrize_img, build_img, assert_terms_in_exception
 from ezcv.utils import is_image
 
 
@@ -186,7 +186,7 @@ def test_pipeline_run_set_ctx_original_img():
     pipeline.run(img_gray)
 
 
-def test_pipeline_run_doesnt_alter_original_img():
+def test_pipeline_run_cant_alter_original_img():
     img = build_img((128, 128), kind='black')
 
     class TestCtxOriginalImg(Operator):
@@ -198,10 +198,11 @@ def test_pipeline_run_doesnt_alter_original_img():
     pipeline = CompVizPipeline()
     before = img.copy()
     pipeline.add_operator('test_op', TestCtxOriginalImg())
-    pipeline.run(img)
-    after = img
 
-    assert np.all(before == after)
+    with pytest.raises(ValueError) as e:
+        pipeline.run(img)
+
+    assert_terms_in_exception(e, ['read-only'])
 
 
 def test_pipeline_run_add_info_works():
