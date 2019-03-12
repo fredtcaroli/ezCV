@@ -104,8 +104,7 @@ def test_pipeline_add_operator_duplicated_name():
     with pytest.raises(ValueError) as e:
         pipeline.add_operator('test_op', TestOperator())
 
-    msg = str(e).lower()
-    assert 'duplicated' in msg
+    assert_terms_in_exception(e, ['duplicated'])
 
 
 @parametrize_img
@@ -125,8 +124,7 @@ def test_pipeline_run_invalid_img(img):
     with pytest.raises(ValueError) as e:
         pipeline.run(img)
 
-    msg = str(e).lower()
-    assert 'invalid' in msg and 'image' in msg
+    assert_terms_in_exception(e, ['invalid', 'image'])
 
 
 @parametrize_img(kind='black')
@@ -167,8 +165,7 @@ def test_pipeline_run_check_op_return(return_value):
     with pytest.raises(ValueError) as e:
         pipeline.run(build_img((16, 16)))
 
-    msg = str(e).lower()
-    assert 'return' in msg and 'invalid' in msg
+    assert_terms_in_exception(e, ['return', 'invalid'])
 
 
 def test_pipeline_run_set_ctx_original_img():
@@ -196,7 +193,6 @@ def test_pipeline_run_cant_alter_original_img():
             return img
 
     pipeline = CompVizPipeline()
-    before = img.copy()
     pipeline.add_operator('test_op', TestCtxOriginalImg())
 
     with pytest.raises(ValueError) as e:

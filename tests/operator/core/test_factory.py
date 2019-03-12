@@ -8,6 +8,7 @@ from ezcv.operator.core.factory import create_operator
 from ezcv.operator.core.operator import Operator
 from ezcv.operator.core.parameter import IntegerParameter, NumberParameter, Parameter
 from ezcv.pipeline import PipelineContext
+from tests.utils import assert_terms_in_exception
 
 unique_object = object()
 
@@ -55,7 +56,7 @@ def test_create_operator_fail_invalid_param_name(config):
     with pytest.raises(ValueError) as e:
         create_operator(config)
 
-    assert 'invalid' in str(e).lower()
+    assert_terms_in_exception(e, ['invalid'])
 
 
 def test_create_operator_fail_invalid_param_type(config):
@@ -64,7 +65,7 @@ def test_create_operator_fail_invalid_param_type(config):
     with pytest.raises(ValueError) as e:
         create_operator(config)
 
-    assert 'invalid' in str(e).lower()
+    assert_terms_in_exception(e, ['invalid'])
 
 
 def test_create_operator_fail_missing_params(config):
@@ -73,7 +74,7 @@ def test_create_operator_fail_missing_params(config):
     with pytest.raises(ValueError) as e:
         create_operator(config)
 
-    assert 'missing' in str(e).lower()
+    assert_terms_in_exception(e, ['missing'])
 
 
 def test_create_operator_invalid_implementation(config):
@@ -82,8 +83,7 @@ def test_create_operator_invalid_implementation(config):
     with pytest.raises(ValueError) as e:
         create_operator(config)
 
-    msg = str(e).lower()
-    assert 'invalid' in msg and 'implementation' in msg
+    assert_terms_in_exception(e, ['invalid', 'implementation'])
 
 
 def test_create_operator_invalid_implementation_no_dots(config):
@@ -92,8 +92,7 @@ def test_create_operator_invalid_implementation_no_dots(config):
     with pytest.raises(ValueError) as e:
         create_operator(config)
 
-    msg = str(e).lower()
-    assert 'invalid' in msg and 'implementation' in msg
+    assert_terms_in_exception(e, ['invalid', 'implementation'])
 
 
 class NotAnOperator(object):
@@ -106,8 +105,7 @@ def test_create_operator_not_an_operator(config):
     with pytest.raises(ValueError) as e:
         create_operator(config)
 
-    msg = str(e).lower()
-    assert 'not' in msg and 'operator' in msg
+    assert_terms_in_exception(e, ['not', 'operator'])
 
 
 def test_create_operator_invalid_parameter_value(config):
@@ -128,5 +126,4 @@ def test_create_operator_invalid_parameter_value(config):
 
     TestOperator.param1 = bak
 
-    msg = str(e).lower()
-    assert 'fail' in msg and 'pars' in msg
+    assert_terms_in_exception(e, ['fail', 'pars'])
