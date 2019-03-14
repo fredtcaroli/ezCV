@@ -10,8 +10,8 @@ from ezcv.utils import is_image
 @pytest.fixture
 def blur_op():
     blur = GaussianBlur()
-    blur.kernel_size = 3
-    blur.sigma = 1.5
+    blur.kernel_size = 6
+    blur.sigma = 3
     return blur
 
 
@@ -54,3 +54,12 @@ def test_gaussian_blur_run_normalize_kernel_size(blur_op, img, ctx):
     blur_op.kernel_size = 4
     result_even = blur_op.run(img, ctx)
     assert np.all(result_even == result_odd)
+
+
+def test_gaussian_blur_run_indicator_that_works_default_values(ctx):
+    blur_op = GaussianBlur()
+    img = build_img((301, 301), rgb=False, kind='black')
+    img[150, ...] = 255
+    blurred = blur_op.run(img, ctx)
+    assert np.all(blurred[150, ...] < 255)
+    assert np.all(blurred[149, ...] > 0) and np.all(blurred[151, ...] > 0)

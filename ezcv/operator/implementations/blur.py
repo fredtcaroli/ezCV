@@ -11,8 +11,8 @@ class GaussianBlur(Operator):
     Parameters:
         - kernel_size: Gaussian kernel size
     """
-    kernel_size = IntegerParameter()
-    sigma = NumberParameter()
+    kernel_size = IntegerParameter(default_value=3)
+    sigma = NumberParameter(default_value=1.5)
 
     def run(self, img: np.ndarray, ctx: PipelineContext):
         odd_kernel_size = self.kernel_size - ((self.kernel_size + 1) % 2)

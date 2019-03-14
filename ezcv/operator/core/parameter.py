@@ -4,6 +4,9 @@ T = TypeVar('T')
 
 
 class Parameter(Generic[T]):
+    def __init__(self, default_value: T):
+        self.default_value = default_value
+
     def from_config(self, config: Any) -> T:
         raise NotImplementedError()
 
@@ -11,9 +14,9 @@ class Parameter(Generic[T]):
         raise NotImplementedError()
 
     def __get__(self, instance, owner) -> T:
-        """ Implementing __get__ so IDEs don't get confused with the values injection
-        """
-        return self
+        if instance is None:
+            return self
+        return self.default_value
 
 
 class IntegerParameter(Parameter[int]):

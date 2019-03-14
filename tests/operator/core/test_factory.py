@@ -14,8 +14,8 @@ unique_object = object()
 
 
 class TestOperator(Operator):
-    param1 = IntegerParameter()
-    param2 = NumberParameter()
+    param1 = IntegerParameter(default_value=10)
+    param2 = NumberParameter(default_value=5.3)
     non_param = unique_object
 
     def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
@@ -68,13 +68,11 @@ def test_create_operator_fail_invalid_param_type(config):
     assert_terms_in_exception(e, ['invalid'])
 
 
-def test_create_operator_fail_missing_params(config):
+def test_create_operator_missing_params_default(config):
     del config['params']['param2']
 
-    with pytest.raises(ValueError) as e:
-        create_operator(config)
-
-    assert_terms_in_exception(e, ['missing'])
+    operator = create_operator(config)
+    assert operator.param2 == 5.3
 
 
 def test_create_operator_invalid_implementation(config):
@@ -119,7 +117,7 @@ def test_create_operator_invalid_parameter_value(config):
             assert False
 
     bak = TestOperator.param1
-    TestOperator.param1 = FailingParameter()
+    TestOperator.param1 = FailingParameter(default_value=None)
 
     with pytest.raises(ValueError) as e:
         create_operator(config)

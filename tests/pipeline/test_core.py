@@ -16,8 +16,8 @@ class TestOperator(Operator):
     def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
         return img + 1
 
-    param1 = IntegerParameter()
-    param2 = NumberParameter()
+    param1 = IntegerParameter(default_value=10)
+    param2 = NumberParameter(default_value=3.3)
 
 
 def get_config_stream():
@@ -50,6 +50,30 @@ def config_stream():
 def test_pipeline_load_return(config_stream):
     r = CompVizPipeline.load(config_stream)
     assert isinstance(r, CompVizPipeline)
+
+
+def test_pipeline_load_loaded_values():
+    config = """
+            version: 0.0
+
+            pipeline:
+              - name: op1
+                config:
+                  implementation: {operator}
+                  params:
+                    param1: 3
+              - name: op2
+                config:
+                  implementation: {operator}
+                  params:
+                    param2: 1
+            """.format(operator=__name__ + '.TestOperator')
+    stream = StringIO(config)
+    pipeline = CompVizPipeline.load(stream)
+    assert pipeline.operators['op1'].param1 == 3
+    assert pipeline.operators['op1'].param2 == 3.3
+    assert pipeline.operators['op2'].param1 == 10
+    assert pipeline.operators['op2'].param2 == 1
 
 
 def test_pipeline_load_add_operator_calls(config_stream):
@@ -252,6 +276,8 @@ def test_pipeline_run_empty_info(config_stream):
         'op1': {},
         'op2': {}
     }
+
+
 
 
 @parametrize_img(kind='black')

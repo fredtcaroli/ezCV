@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from ezcv.operator import Parameter, IntegerParameter, NumberParameter
@@ -5,23 +7,23 @@ from ezcv.operator import Parameter, IntegerParameter, NumberParameter
 
 @pytest.fixture(scope='module')
 def integer_param():
-    return IntegerParameter()
+    return IntegerParameter(default_value=10)
 
 
 @pytest.fixture(scope='module')
 def number_param():
-    return NumberParameter()
+    return NumberParameter(default_value=2.5)
 
 
 def test_parameter_not_implemented_from_config():
-    param = Parameter()
+    param = Parameter(default_value=None)
 
     with pytest.raises(NotImplementedError):
         param.from_config(None)
 
 
 def test_parameter_not_implemented_to_config():
-    param = Parameter()
+    param = Parameter(default_value=None)
 
     with pytest.raises(NotImplementedError):
         param.to_config(None)
@@ -173,3 +175,37 @@ def test_number_parameter_to_config_invalid_config(value, number_param):
 ])
 def test_number_parameter_to_config_valid_config(value, number_param):
     assert value == number_param.to_config(value)
+
+
+def TestDefaultParameterHelper(value: Any):
+    class SomeClass(object):
+        param = Parameter(default_value=value)
+    return SomeClass()
+
+
+@pytest.mark.parametrize('value', [
+    None,
+    object(),
+    object,
+    10,
+    2.5,
+    'foo'
+])
+def test_parameter_default_value_return(value):
+    obj = TestDefaultParameterHelper(value)
+    assert obj.param == value
+
+
+def test_parameter_default_value_not_returned_when_there_is_no_instance():
+    default_value = object()
+
+    class SomeClass(object):
+        param = Parameter(default_value=default_value)
+
+    assert isinstance(SomeClass.param, Parameter) and SomeClass.param != default_value
+
+
+def test_parameter_can_get_default_value():
+    default_value = object()
+    param = Parameter(default_value=default_value)
+    assert param.default_value is default_value
