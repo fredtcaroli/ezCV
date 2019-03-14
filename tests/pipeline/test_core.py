@@ -80,6 +80,22 @@ def test_pipeline_operators_indexable(config_stream):
     _ = pipeline.operators['op2']
 
 
+def test_pipeline_operators_type(config_stream):
+    pipeline = CompVizPipeline.load(config_stream)
+    op1 = pipeline.operators['op1']
+    assert isinstance(op1, TestOperator)
+    op2 = pipeline.operators['op2']
+    assert isinstance(op2, TestOperator)
+
+
+def test_pipeline_operators_params(config_stream):
+    pipeline = CompVizPipeline.load(config_stream)
+    op1 = pipeline.operators['op1']
+    assert op1.param1 == 3 and op1.param2 == 1.5
+    op2 = pipeline.operators['op2']
+    assert op2.param1 == 5 and op2.param2 == 1.0
+
+
 def test_pipeline_operators_invalid_name(config_stream):
     pipeline = CompVizPipeline.load(config_stream)
     with pytest.raises(Exception):
