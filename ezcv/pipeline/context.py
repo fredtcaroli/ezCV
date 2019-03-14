@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from contextlib import contextmanager
 from typing import ContextManager, Any
 
@@ -14,7 +15,7 @@ class PipelineContext(object):
         self.original_img.flags.writeable = False
         self._serving_original_img = None
         self._scopes = list()
-        self.info = dict()
+        self.info = OrderedDict()
 
     @contextmanager
     def scope(self, name: str) -> ContextManager:
