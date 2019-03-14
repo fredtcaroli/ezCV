@@ -2,7 +2,8 @@ from typing import Any
 
 import pytest
 
-from ezcv.operator import Parameter, IntegerParameter, NumberParameter
+from ezcv.operator import Parameter, IntegerParameter, NumberParameter, EnumParameter
+from tests.utils import assert_terms_in_exception
 
 
 @pytest.fixture(scope='module')
@@ -209,3 +210,72 @@ def test_parameter_can_get_default_value():
     default_value = object()
     param = Parameter(default_value=default_value)
     assert param.default_value is default_value
+
+
+@pytest.mark.parametrize('value', [
+    '1',
+    '2',
+    '3'
+])
+def test_enum_parameter_from_config_valid(value):
+    param = EnumParameter(['1', '2', '3'], '1')
+    assert param.from_config(value) == value
+
+
+@pytest.mark.parametrize('value', [
+    1,
+    2,
+    3,
+    '0',
+    '4',
+    None,
+    object(),
+    object
+])
+def test_enum_invalid_from_config_invalid(value):
+    param = EnumParameter(['1', '2', '3'], default_value='1')
+    with pytest.raises(AssertionError):
+        param.from_config(value)
+
+
+@pytest.mark.parametrize('value', [
+    '1',
+    '2',
+    '3'
+])
+def test_enum_parameter_to_config_valid(value):
+    param = EnumParameter(['1', '2', '3'], '1')
+    assert param.to_config(value) == value
+
+
+@pytest.mark.parametrize('value', [
+    1,
+    2,
+    3,
+    '0',
+    '4',
+    None,
+    object(),
+    object
+])
+def test_enum_invalid_to_config_invalid(value):
+    param = EnumParameter(['1', '2', '3'], default_value='1')
+    with pytest.raises(AssertionError):
+        param.to_config(value)
+
+
+@pytest.mark.parametrize('value', [
+    1,
+    2,
+    3,
+    '0',
+    '4',
+    None,
+    object(),
+    object
+])
+def test_enum_invalid_default_param(value):
+    with pytest.raises(ValueError) as e:
+        _ = EnumParameter(['1', '2', '3'], default_value=value)
+
+    assert_terms_in_exception(e, ['invalid', 'default', 'value'])
