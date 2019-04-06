@@ -1,9 +1,11 @@
+import re
 from io import StringIO
 from typing import Any
-from unittest.mock import patch, ANY, call
+from unittest.mock import patch, ANY, call, MagicMock
 
 import numpy as np
 import pytest
+import yaml
 
 from ezcv import CompVizPipeline
 from ezcv.operator import Operator, IntegerParameter, NumberParameter
@@ -22,7 +24,7 @@ class TestOperator(Operator):
 
 def get_config_stream():
     config = """
-        version: 0.0
+        version: '0.0'
 
         pipeline:
           - name: op1
@@ -54,7 +56,7 @@ def test_pipeline_load_return(config_stream):
 
 def test_pipeline_load_loaded_values():
     config = """
-            version: 0.0
+            version: '0.0'
 
             pipeline:
               - name: op1
@@ -287,7 +289,7 @@ def test_pipeline_integration(img):
         return
 
     config = """
-        version: 0.0
+        version: '0.0'
         
         pipeline:
           - name: Blur1
@@ -310,3 +312,109 @@ def test_pipeline_integration(img):
     img[mid_index, ...] = 255
     out, ctx = pipeline.run(img)
     assert np.all(out[mid_index, ...] < 255)
+
+
+def test_pipeline_save_runs():
+    pipeline = CompVizPipeline()
+    pipeline.save(StringIO())
+
+
+def test_pipeline_save_writes():
+    pipeline = CompVizPipeline()
+    output_stream = StringIO()
+    output_stream.write = MagicMock()
+    pipeline.save(output_stream)
+    output_stream.write.assert_called()
+
+
+@pytest.fixture
+def simple_config_string():
+    pipeline = CompVizPipeline()
+    output_stream = StringIO()
+    pipeline.save(output_stream)
+    output_stream.seek(0)
+    config_str = output_stream.read()
+    return config_str
+
+
+def test_pipeline_save_is_yaml(simple_config_string):
+    yaml.load(StringIO(simple_config_string))
+
+
+def test_pipeline_save_version_exists(simple_config):
+    assert 'version' in simple_config
+
+
+@pytest.fixture
+def simple_config(simple_config_string):
+    return yaml.load(StringIO(simple_config_string))
+
+
+def test_pipeline_save_version_is_version(simple_config):
+    assert re.match(r'\d+(\.\d+)*', simple_config['version'])
+
+
+def test_pipeline_save_version_is_right(simple_config):
+    assert simple_config['version'] == '0.0'
+
+
+def test_pipeline_save_pipeline_exists(simple_config):
+    assert 'pipeline' in simple_config
+
+
+def test_pipeline_save_pipeline_type(simple_config):
+    assert isinstance(simple_config['pipeline'], list)
+
+
+def test_pipeline_save_pipeline_empty(simple_config):
+    assert simple_config['pipeline'] == []
+
+
+@pytest.fixture
+def more_complex_config(config_stream):
+    pipeline = CompVizPipeline.load(config_stream)
+    output_stream = StringIO()
+    pipeline.save(output_stream)
+    output_stream.seek(0)
+    return yaml.load(output_stream.read())
+
+
+def test_pipeline_save_pipeline_nb_of_stages(more_complex_config):
+    assert len(more_complex_config['pipeline']) == 2
+
+
+def test_pipeline_save_pipeline_stages_type(more_complex_config):
+    assert all(isinstance(stage, dict) for stage in more_complex_config['pipeline'])
+
+
+def test_pipeline_save_pipeline_names(more_complex_config):
+    names = [stage_config['name'] for stage_config in more_complex_config['pipeline']]
+    assert names == ['op1', 'op2']
+
+
+def test_pipeline_save_gets_ops_configs(config_stream):
+    pipeline = CompVizPipeline.load(config_stream)
+    with patch('ezcv.operator.get_operator_config') as mock:
+        mock.return_value = 'some_value'
+        pipeline.save(StringIO())
+        call_args = [cal[0] for cal in mock.call_args_list]
+        assert (pipeline.operators['op1'],) in call_args
+        assert (pipeline.operators['op2'],) in call_args
+
+
+def test_pipeline_save_op_config_exists(more_complex_config):
+    assert all('config' in stage_config for stage_config in more_complex_config['pipeline'])
+
+
+def test_pipeline_save_op_config_return_from_get_operator_config(config_stream):
+    pipeline = CompVizPipeline.load(config_stream)
+    unique_value = 'unique_value'
+    with patch('ezcv.operator.get_operator_config') as mock:
+        mock.return_value = unique_value
+        output_stream = StringIO()
+        pipeline.save(output_stream)
+        output_stream.seek(0)
+        config = yaml.load(output_stream)
+        assert config['pipeline'][0]['config'] == 'unique_value'
+        assert config['pipeline'][1]['config'] == 'unique_value'
+

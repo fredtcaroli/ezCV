@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from pytest import fixture
 
-from ezcv.operator.core.factory import create_operator
+from ezcv.operator.core.config import create_operator, get_operator_config
 from ezcv.operator.core.operator import Operator
 from ezcv.operator.core.parameter import IntegerParameter, NumberParameter, Parameter
 from ezcv.pipeline import PipelineContext
@@ -125,3 +125,54 @@ def test_create_operator_invalid_parameter_value(config):
     TestOperator.param1 = bak
 
     assert_terms_in_exception(e, ['fail', 'pars'])
+
+
+def test_get_operator_config_return_type():
+    config = get_operator_config(TestOperator())
+    assert isinstance(config, dict)
+
+
+def test_get_operator_config_implementation_exists():
+    op = TestOperator()
+    config = get_operator_config(op)
+    assert 'implementation' in config
+
+
+def test_get_operator_config_implementation_value():
+    op = TestOperator()
+    config = get_operator_config(op)
+    assert config['implementation'] == __name__ + '.TestOperator'
+
+
+def test_get_operator_config_params_exists():
+    op = TestOperator()
+    config = get_operator_config(op)
+    assert 'params' in config
+
+
+def test_get_operator_config_params_type():
+    op = TestOperator()
+    config = get_operator_config(op)
+    assert isinstance(config['params'], dict)
+
+
+def test_get_operator_config_params_keys():
+    op = TestOperator()
+    config = get_operator_config(op)
+    assert set(config['params'].keys()) == {'param1', 'param2'}
+
+
+def test_get_operator_config_params_default_values():
+    """ Tests get_operator_config params when the operator has default values
+    """
+    op = TestOperator()
+    config = get_operator_config(op)
+    assert config['params'] == {'param1': 10, 'param2': 5.3}
+
+
+def test_get_operator_config_params_values():
+    op = TestOperator()
+    op.param1 = 5
+    op.param2 = 3.5
+    config = get_operator_config(op)
+    assert config['params'] == {'param1': 5, 'param2': 3.5}

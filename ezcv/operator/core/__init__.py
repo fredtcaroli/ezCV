@@ -1,3 +1,3 @@
 from .operator import Operator
 from .parameter import *
-from .factory import create_operator
+from .config import create_operator, get_operator_config

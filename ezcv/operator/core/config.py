@@ -1,7 +1,6 @@
 import inspect
-from typing import Iterator
 
-from ezcv.classpath import class_from_fully_qualified_name
+from ezcv.classpath import class_from_fully_qualified_name, fully_qualified_name
 from ezcv.operator.core.operator import Operator
 from ezcv.operator.core.parameter import Parameter
 
@@ -16,7 +15,7 @@ def create_operator(config: dict) -> Operator:
     if not issubclass(cls, Operator):
         raise ValueError("%s is not an Operator" % fqn)
 
-    parameters = {name: value for name, value in inspect.getmembers(cls) if isinstance(value, Parameter)}
+    parameters = _get_parameters_objects(cls)
 
     op = cls()
     for name, param_config in config['params'].items():
@@ -29,3 +28,20 @@ def create_operator(config: dict) -> Operator:
         setattr(op, name, parsed_value)
 
     return op
+
+
+def _get_parameters_objects(cls: type) -> dict:
+    return {name: value for name, value in inspect.getmembers(cls) if isinstance(value, Parameter)}
+
+
+def get_operator_config(op: Operator) -> dict:
+    config = dict()
+    config['implementation'] = fully_qualified_name(type(op))
+
+    params_objs = _get_parameters_objects(type(op))
+    params = dict()
+    for name, _ in params_objs.items():
+        params[name] = getattr(op, name)
+    config['params'] = params
+
+    return config
