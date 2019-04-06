@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 from ezcv.operator.implementations.blur import GaussianBlur
-from ezcv.pipeline.context import PipelineContext
 from tests.utils import parametrize_img, build_img
 from ezcv.utils import is_image
 
@@ -13,11 +12,6 @@ def blur_op():
     blur.kernel_size = 6
     blur.sigma = 3
     return blur
-
-
-@pytest.fixture
-def ctx():
-    return PipelineContext(build_img((16, 16)))
 
 
 @parametrize_img

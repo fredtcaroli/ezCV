@@ -45,7 +45,7 @@ class EnumParameter(Parameter[str]):
             raise ValueError('Invalid default value: "%s". Possible values are: %s' %
                              (str(default_value), str(possible_values)))
         super().__init__(default_value=default_value)
-        self.possible_values = set(possible_values)
+        self.possible_values = possible_values
 
     def from_config(self, config: Any) -> str:
         assert isinstance(config, str) and config in self.possible_values

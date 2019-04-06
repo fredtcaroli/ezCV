@@ -279,3 +279,9 @@ def test_enum_invalid_default_param(value):
         _ = EnumParameter(['1', '2', '3'], default_value=value)
 
     assert_terms_in_exception(e, ['invalid', 'default', 'value'])
+
+
+def test_enum_exposes_possible_values():
+    possible_values = ['1', '2', '3']
+    param = EnumParameter(possible_values=possible_values, default_value='1')
+    assert param.possible_values == possible_values
