@@ -13,7 +13,7 @@ def integer_param():
 
 @pytest.fixture(scope='module')
 def number_param():
-    return NumberParameter(default_value=2.5)
+    return NumberParameter(default_value=2.5, lower=1, upper=10)
 
 
 def test_parameter_not_implemented_from_config():
@@ -229,6 +229,30 @@ def test_number_parameter_to_config_invalid_config(value, number_param):
 ])
 def test_number_parameter_to_config_valid_config(value, number_param):
     assert value == number_param.to_config(value)
+
+
+@pytest.mark.parametrize('limits', [
+    (0, 10),
+    (-10, 10),
+    (-10, -5),
+    (2.3, 5.4),
+    (-10.2, 2.4)
+])
+def test_number_parameter_valid_upper_lower_limits(limits):
+    NumberParameter(default_value=5, lower=limits[0], upper=limits[1])
+
+
+@pytest.mark.parametrize('limits', [
+    (3.0, 3.0),
+    (5, 4),
+    ('not a number', 5),
+    (5, 'not a number')
+])
+def test_number_parameter_invalid_lower_upper_limits(limits):
+    with pytest.raises(ValueError) as e:
+        NumberParameter(default_value=5, lower=limits[0], upper=limits[1])
+
+    assert_terms_in_exception(e, ['invalid'])
 
 
 def TestDefaultParameterHelper(value: Any):

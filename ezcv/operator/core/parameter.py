@@ -43,6 +43,19 @@ class IntegerParameter(Parameter[int]):
 
 
 class NumberParameter(Parameter[float]):
+    def __init__(self, default_value: float, lower: float, upper: float):
+        if not isinstance(default_value, (float, int)):
+            raise ValueError('Invalid default_value: %s' % str(default_value))
+        super().__init__(default_value)
+        if not isinstance(lower, (float, int)):
+            raise ValueError('Invalid number lower limit: %s' % str(lower))
+        if not isinstance(upper, (float, int)):
+            raise ValueError('Invalid number upper limit: %s' % str(upper))
+        if lower >= upper:
+            raise ValueError('Invalid lower and upper limits: (%d, %d)' % (lower, upper))
+        self.lower = lower
+        self.high = upper
+
     def from_config(self, config: Any) -> float:
         assert isinstance(config, (float, int))
         return config

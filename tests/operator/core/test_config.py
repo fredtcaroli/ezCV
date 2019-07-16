@@ -15,7 +15,7 @@ unique_object = object()
 
 class TestOperator(Operator):
     param1 = IntegerParameter(default_value=10, lower=0, upper=15)
-    param2 = NumberParameter(default_value=5.3)
+    param2 = NumberParameter(default_value=5.3, lower=0, upper=15)
     non_param = unique_object
 
     def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:

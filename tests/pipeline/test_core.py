@@ -19,7 +19,7 @@ class TestOperator(Operator):
         return img + 1
 
     param1 = IntegerParameter(default_value=10, lower=5, upper=15)
-    param2 = NumberParameter(default_value=3.3)
+    param2 = NumberParameter(default_value=3.3, lower=1, upper=10)
 
 
 def get_config_stream():
