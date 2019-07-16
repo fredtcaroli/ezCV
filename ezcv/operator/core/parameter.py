@@ -20,6 +20,19 @@ class Parameter(Generic[T]):
 
 
 class IntegerParameter(Parameter[int]):
+    def __init__(self, default_value: int, lower: int, upper: int):
+        if not isinstance(default_value, int):
+            raise ValueError('Invalid default_value: %s' % str(default_value))
+        super().__init__(default_value)
+        if not isinstance(lower, int):
+            raise ValueError('Invalid integer lower limit: %s' % str(lower))
+        if not isinstance(upper, int):
+            raise ValueError('Invalid integer upper limit: %s' % str(upper))
+        if lower >= upper:
+            raise ValueError('Invalid lower and upper limits: (%d, %d)' % (lower, upper))
+        self.lower = lower
+        self.high = upper
+
     def from_config(self, config: Any) -> int:
         assert isinstance(config, int)
         return config

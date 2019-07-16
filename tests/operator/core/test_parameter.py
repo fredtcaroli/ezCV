@@ -8,7 +8,7 @@ from tests.utils import assert_terms_in_exception
 
 @pytest.fixture(scope='module')
 def integer_param():
-    return IntegerParameter(default_value=10)
+    return IntegerParameter(default_value=10, lower=5, upper=15)
 
 
 @pytest.fixture(scope='module')
@@ -85,13 +85,66 @@ def test_integer_parameter_to_config_invalid_value(value, integer_param):
     -2147483648,  # -2**31
     2147483647,  # 2**31 - 1
     -2147483647,  # -2**31 + 1
-    9223372036854775808, # old sys.maxint + 1,
+    9223372036854775808,  # old sys.maxint + 1,
     -9223372036854775808,
     10,
     -10
 ])
 def test_integer_parameter_to_config_valid_value(value, integer_param):
     assert value == integer_param.to_config(value)
+
+
+@pytest.mark.parametrize('limits', [
+    (0, 10),
+    (2, 5),
+    (-10, 10),
+    (-10, -5)
+])
+def test_integer_parameter_valid_lower_upper_limits(limits):
+    IntegerParameter(default_value=5, lower=limits[0], upper=limits[1])
+
+
+@pytest.mark.parametrize('limits', [
+    (1, 1),
+    (5, 4),
+    ('not a number', 5),
+    (5, 'not a number')
+])
+def test_integer_parameter_invalid_lower_higher_limits(limits):
+    with pytest.raises(ValueError) as e:
+        IntegerParameter(default_value=5, lower=limits[0], upper=limits[1])
+    assert_terms_in_exception(e, ['invalid'])
+
+
+@pytest.mark.parametrize('default_value', [
+    0,
+    -1,
+    1,
+    2147483648,  # 2**31
+    -2147483648,  # -2**31
+    2147483647,  # 2**31 - 1
+    -2147483647,  # -2**31 + 1
+    9223372036854775808,  # old sys.maxint + 1,
+    -9223372036854775808
+])
+def test_integer_parameter_valid_default_value(default_value):
+    IntegerParameter(default_value=default_value, lower=0, upper=10)
+
+
+@pytest.mark.parametrize('default_value', [
+    '',
+    'not-a-number',
+    None,
+    '2.5',
+    '10',
+    'ten',
+    tuple(),
+    list()
+])
+def test_integer_parameter_invalid_default_value(default_value):
+    with pytest.raises(ValueError) as e:
+        IntegerParameter(default_value=default_value, lower=0, upper=10)
+    assert_terms_in_exception(e, ['invalid', 'default'])
 
 
 @pytest.mark.parametrize('config', [

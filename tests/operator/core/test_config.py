@@ -14,7 +14,7 @@ unique_object = object()
 
 
 class TestOperator(Operator):
-    param1 = IntegerParameter(default_value=10)
+    param1 = IntegerParameter(default_value=10, lower=0, upper=15)
     param2 = NumberParameter(default_value=5.3)
     non_param = unique_object
 
