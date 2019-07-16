@@ -52,6 +52,6 @@ def parametrize_img(func: Callable = None, include_valid: bool = True, include_i
 
 
 def assert_terms_in_exception(e: "ExceptionInfo", terms: List[str]):
-    msg = str(e).lower()
+    msg = str(e.value).lower()
     for term in terms:
         assert term.lower().strip() in msg

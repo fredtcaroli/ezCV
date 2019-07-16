@@ -20,8 +20,7 @@ def test_pipeline_context_invalid_img(img):
     with pytest.raises(ValueError) as e:
         PipelineContext(img)
 
-    msg = str(e).lower()
-    assert 'invalid' in msg and 'image' in msg
+    assert_terms_in_exception(e, ['invalid', 'image'])
 
 
 def test_pipeline_context_original_img(original_img, ctx):
