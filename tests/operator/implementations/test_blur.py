@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from ezcv.operator import get_available_operators
 from ezcv.operator.implementations.blur import GaussianBlur
 from tests.utils import parametrize_img, build_img
 from ezcv.utils import is_image
@@ -57,3 +58,8 @@ def test_gaussian_blur_run_indicator_that_works_default_values(ctx):
     blurred = blur_op.run(img, ctx)
     assert np.all(blurred[150, ...] < 255)
     assert np.all(blurred[149, ...] > 0) and np.all(blurred[151, ...] > 0)
+
+
+def test_gaussian_blur_is_registered():
+    operators = get_available_operators()
+    assert GaussianBlur in operators

@@ -1,33 +1,18 @@
-import functools
-import importlib
-import inspect
-import pkgutil
-from typing import Set
+from typing import Type, List
 
 from .core import *
 from . import implementations
 
 
-def __cache_once(wrapped):
-    r = wrapped()
-
-    @functools.wraps(wrapped)
-    def wrapper():
-        return r
-    return wrapper
+_OPERATORS = list()
 
 
-@__cache_once
-def get_available_operators() -> Set[Operator]:
-    collected = set()
-    for importer, modname, ispkg in pkgutil.iter_modules(implementations.__path__):
-        if not ispkg:
-            module = importlib.import_module('ezcv.operator.implementations.%s' % modname)
-            ops = inspect.getmembers(module, lambda member: inspect.isclass(member) and issubclass(member, Operator))
-            for op in ops:
-                collected.add(op[1])
-        else:
-            raise ValueError('Packages inside ezcv.operator.implementations are not supported yet')
-    if Operator in collected:
-        collected.remove(Operator)
-    return collected
+def get_available_operators() -> List[Operator]:
+    return _OPERATORS.copy()
+
+
+def register_operator(cls: Type[Operator]):
+    if not issubclass(cls, Operator):
+        raise ValueError("%s is not an Operator" % str(cls))
+    _OPERATORS.append(cls)
+    return cls

@@ -4,7 +4,7 @@ from typing import Callable
 import cv2
 import numpy as np
 
-from ezcv.operator import Operator, EnumParameter
+from ezcv.operator import Operator, EnumParameter, register_operator
 from ezcv.pipeline import PipelineContext
 
 
@@ -28,6 +28,7 @@ def _space_transformer(keys) -> Callable[[np.ndarray], np.ndarray]:
     return all_transforms
 
 
+@register_operator
 class ColorSpaceChange(Operator):
     """ Changes the image's color space
 

@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from ezcv.operator import get_available_operators
 from ezcv.operator.implementations.color_space import ColorSpaceChange
 from tests.utils import build_img
 
@@ -58,3 +59,8 @@ def test_color_cvt_mapping_from_gray(target, ctx):
     op.target = target_space
     outp = op.run(img_src, ctx)
     assert np.all(np.isclose(outp, img_target))
+
+
+def test_color_cvt_is_registered():
+    operators = get_available_operators()
+    assert ColorSpaceChange in operators
