@@ -23,10 +23,10 @@ def parametrize_img(func: Callable = None, include_valid: bool = True, include_i
     valid_sizes = [
         (100, 100),
         (1, 1),
-        (3, 3),
+        (4, 4),
         (720, 1280),
-        (3, 1280),
-        (720, 3)
+        (4, 1280),
+        (720, 4)
     ]
     invalid_sizes = [
         (0, 0),
