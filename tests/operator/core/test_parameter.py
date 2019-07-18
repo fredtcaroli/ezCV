@@ -255,6 +255,42 @@ def test_number_parameter_invalid_lower_upper_limits(limits):
     assert_terms_in_exception(e, ['invalid'])
 
 
+@pytest.mark.parametrize('value', [
+    10,
+    -10,
+    0.0,
+    -3.0,
+    3.0,
+    2147483648.0,  # 2**31
+    -2147483648.0,  # -2**31
+    2147483647.0,  # 2**31 - 1
+    -2147483647.0,  # -2**31 + 1
+    10.0,
+    -10.0,
+    2.5,
+    float('inf'),
+    float('-inf')
+])
+def test_number_parameter_valid_default_value(value):
+    NumberParameter(default_value=value, lower=0, upper=5)
+
+
+@pytest.mark.parametrize('value', [
+    '',
+    'not-a-number',
+    None,
+    '2.5',
+    '10',
+    'ten',
+    tuple(),
+    list()
+])
+def test_number_parameter_invalid_default_value(value):
+    with pytest.raises(ValueError) as e:
+        NumberParameter(default_value=value, lower=0, upper=5)
+    assert_terms_in_exception(e, ['invalid', 'default'])
+
+
 def TestDefaultParameterHelper(value: Any):
     class SomeClass(object):
         param = Parameter(default_value=value)
