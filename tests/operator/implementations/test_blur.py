@@ -3,7 +3,7 @@ import pytest
 
 from ezcv.operator import get_available_operators
 from ezcv.operator.implementations.blur import GaussianBlur
-from tests.utils import parametrize_img, build_img
+from ezcv.test_utils import build_img, parametrize_img
 from ezcv.utils import is_image
 
 

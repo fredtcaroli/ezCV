@@ -1,7 +1,7 @@
 import pytest
 
 from ezcv.operator import get_available_operators, Operator, register_operator
-from tests.utils import assert_terms_in_exception
+from ezcv.test_utils import assert_terms_in_exception
 
 
 def test_get_available_operators_return():

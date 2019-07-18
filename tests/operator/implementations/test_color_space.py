@@ -3,7 +3,7 @@ import pytest
 
 from ezcv.operator import get_available_operators
 from ezcv.operator.implementations.color_space import ColorSpaceChange
-from tests.utils import build_img
+from ezcv.test_utils import build_img
 
 
 @pytest.mark.parametrize('target', ColorSpaceChange.target.possible_values)

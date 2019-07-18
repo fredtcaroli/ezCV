@@ -1,7 +1,7 @@
 import pytest
 
 from ezcv.pipeline import PipelineContext
-from tests.utils import build_img
+from ezcv.test_utils import build_img
 
 
 @pytest.fixture

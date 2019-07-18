@@ -8,7 +8,7 @@ from ezcv.operator.core.config import create_operator, get_operator_config
 from ezcv.operator.core.operator import Operator
 from ezcv.operator.core.parameter import IntegerParameter, NumberParameter, Parameter
 from ezcv.pipeline import PipelineContext
-from tests.utils import assert_terms_in_exception
+from ezcv.test_utils import assert_terms_in_exception
 
 unique_object = object()
 

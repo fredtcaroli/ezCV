@@ -3,7 +3,7 @@ from typing import Any
 import pytest
 
 from ezcv.operator import Parameter, IntegerParameter, NumberParameter, EnumParameter
-from tests.utils import assert_terms_in_exception
+from ezcv.test_utils import assert_terms_in_exception
 
 
 @pytest.fixture(scope='module')

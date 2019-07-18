@@ -1,5 +1,5 @@
 from ezcv.utils import is_image
-from tests.utils import parametrize_img
+from ezcv.test_utils import parametrize_img
 
 
 @parametrize_img
