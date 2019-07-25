@@ -5,8 +5,8 @@ from typing import TextIO, Tuple
 import yaml
 
 import ezcv.operator as op_lib
-from ezcv import utils
-from ezcv.pipeline.context import PipelineContext
+from ezcv import utils, create_operator
+from ezcv.pipeline_context import PipelineContext
 
 
 class CompVizPipeline(object):
@@ -41,7 +41,7 @@ class CompVizPipeline(object):
         pipeline_config = yaml.load(stream)
         runner = CompVizPipeline()
         for op_config in pipeline_config['pipeline']:
-            operator = op_lib.create_operator(op_config['config'])
+            operator = create_operator(op_config['config'])
             runner.add_operator(op_config['name'], operator)
         return runner
 

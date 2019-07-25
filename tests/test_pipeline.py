@@ -9,7 +9,7 @@ import yaml
 
 from ezcv import CompVizPipeline
 from ezcv.operator import Operator, IntegerParameter, NumberParameter
-from ezcv.pipeline.context import PipelineContext
+from ezcv.pipeline_context import PipelineContext
 from ezcv.test_utils import build_img, parametrize_img, assert_terms_in_exception
 from ezcv.utils import is_image
 

@@ -1,8 +1,8 @@
 import inspect
 
 from ezcv.classpath import class_from_fully_qualified_name, fully_qualified_name
-from ezcv.operator.core.operator import Operator
-from ezcv.operator.core.parameter import Parameter
+from .operator import Operator
+from .parameter import Parameter
 
 
 def create_operator(config: dict) -> Operator:

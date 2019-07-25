@@ -1,9 +1,8 @@
 import cv2
 import numpy as np
 
-from ezcv.operator import register_operator
-from ezcv.operator.core import Operator, IntegerParameter, NumberParameter
-from ezcv.pipeline import PipelineContext
+from ezcv.operator import register_operator, Operator, IntegerParameter, NumberParameter
+from ezcv.pipeline_context import PipelineContext
 
 
 @register_operator

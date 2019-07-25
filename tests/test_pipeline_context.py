@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from ezcv.pipeline.context import PipelineContext
+from ezcv.pipeline_context import PipelineContext
 from ezcv.test_utils import build_img, parametrize_img, assert_terms_in_exception
 
 

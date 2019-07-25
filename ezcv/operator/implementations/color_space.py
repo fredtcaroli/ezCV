@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 
 from ezcv.operator import Operator, EnumParameter, register_operator
-from ezcv.pipeline import PipelineContext
+from ezcv.pipeline_context import PipelineContext
 
 
 def _space_transformer(keys) -> Callable[[np.ndarray], np.ndarray]:

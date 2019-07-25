@@ -81,3 +81,10 @@ class EnumParameter(Parameter[str]):
         assert isinstance(value, str) and value in self.possible_values
         return value
 
+
+__all__ = [
+    "Parameter",
+    "IntegerParameter",
+    "NumberParameter",
+    "EnumParameter"
+]
