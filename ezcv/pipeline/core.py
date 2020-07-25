@@ -38,7 +38,7 @@ class CompVizPipeline(object):
 
     @staticmethod
     def load(stream: TextIO) -> "CompVizPipeline":
-        pipeline_config = yaml.load(stream)
+        pipeline_config = yaml.safe_load(stream)
         runner = CompVizPipeline()
         for op_config in pipeline_config['pipeline']:
             operator = op_lib.create_operator(op_config['config'])
@@ -46,7 +46,7 @@ class CompVizPipeline(object):
         return runner
 
     def save(self, stream: TextIO):
-        config = collections.OrderedDict()
+        config = dict()
         config['version'] = '0.0'
         pipeline_config = list()
         for name, op in self.operators.items():
@@ -55,4 +55,4 @@ class CompVizPipeline(object):
             stage_config['config'] = op_lib.get_operator_config(op)
             pipeline_config.append(stage_config)
         config['pipeline'] = pipeline_config
-        yaml.dump(config, stream)
+        yaml.safe_dump(config, stream, sort_keys=False)

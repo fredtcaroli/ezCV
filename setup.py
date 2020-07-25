@@ -8,5 +8,5 @@ setup(
     author='Frederico Caroli',
     description='Backend library for ezCV',
     python_requires='>=3',
-    install_requires=['numpy', 'pyyaml', 'opencv-python>=3']
+    install_requires=['numpy', 'pyyaml']
 )

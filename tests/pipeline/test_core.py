@@ -1,7 +1,7 @@
 import re
 from io import StringIO
 from typing import Any
-from unittest.mock import patch, ANY, call, MagicMock
+from unittest.mock import patch, ANY, call, Mock
 
 import numpy as np
 import pytest
@@ -321,8 +321,8 @@ def test_pipeline_save_runs():
 
 def test_pipeline_save_writes():
     pipeline = CompVizPipeline()
-    output_stream = StringIO()
-    output_stream.write = MagicMock()
+    output_stream = Mock()
+    output_stream.write = Mock()
     pipeline.save(output_stream)
     output_stream.write.assert_called()
 
@@ -338,7 +338,7 @@ def simple_config_string():
 
 
 def test_pipeline_save_is_yaml(simple_config_string):
-    yaml.load(StringIO(simple_config_string))
+    yaml.safe_load(StringIO(simple_config_string))
 
 
 def test_pipeline_save_version_exists(simple_config):
@@ -347,7 +347,7 @@ def test_pipeline_save_version_exists(simple_config):
 
 @pytest.fixture
 def simple_config(simple_config_string):
-    return yaml.load(StringIO(simple_config_string))
+    return yaml.safe_load(StringIO(simple_config_string))
 
 
 def test_pipeline_save_version_is_version(simple_config):
@@ -376,7 +376,7 @@ def more_complex_config(config_stream):
     output_stream = StringIO()
     pipeline.save(output_stream)
     output_stream.seek(0)
-    return yaml.load(output_stream.read())
+    return yaml.safe_load(output_stream.read())
 
 
 def test_pipeline_save_pipeline_nb_of_stages(more_complex_config):
@@ -414,7 +414,7 @@ def test_pipeline_save_op_config_return_from_get_operator_config(config_stream):
         output_stream = StringIO()
         pipeline.save(output_stream)
         output_stream.seek(0)
-        config = yaml.load(output_stream)
+        config = yaml.safe_load(output_stream)
         assert config['pipeline'][0]['config'] == 'unique_value'
         assert config['pipeline'][1]['config'] == 'unique_value'
 

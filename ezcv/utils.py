@@ -4,7 +4,7 @@ from typing import Any
 import numpy as np
 
 
-def is_image(data: Any):
+def is_image(data: Any) -> bool:
     return (
         isinstance(data, np.ndarray) and
         (data.ndim == 2 or data.ndim == 3) and

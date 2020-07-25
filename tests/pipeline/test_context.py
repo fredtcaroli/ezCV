@@ -59,6 +59,34 @@ def test_pipeline_context_add_info_repeated_names(ctx):
     assert_terms_in_exception(e, ['duplicated', 'name'])
 
 
+def test_pipeline_context_add_info_repeated_name_inside_context(ctx):
+    info_object = object()
+    name = 'info_name'
+    with ctx.scope('some_score'):
+        ctx.add_info(name, info_object)
+        with pytest.raises(ValueError) as e:
+            another_object = object()
+            ctx.add_info(name, another_object)
+
+    assert_terms_in_exception(e, ['duplicated', 'name'])
+
+
+def test_pipeline_context_add_info_repeated_name_in_different_scope(ctx):
+    scope1 = 'scope1'
+    info_object_1 = object()
+    scope2 = 'scope2'
+    info_object_2 = object()
+    name = 'info_name'
+    with ctx.scope(scope1):
+        ctx.add_info(name, info_object_1)
+
+    with ctx.scope(scope2):
+        ctx.add_info(name, info_object_2)
+
+    assert ctx.info[scope1][name] is info_object_1
+    assert ctx.info[scope2][name] is info_object_2
+
+
 @pytest.mark.parametrize('invalid_name', [
     None,
     '',
