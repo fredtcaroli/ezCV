@@ -40,8 +40,10 @@ def get_operator_config(op: Operator) -> dict:
 
     params_objs = _get_parameters_objects(type(op))
     params = dict()
-    for name, _ in params_objs.items():
-        params[name] = getattr(op, name)
+    for name, param_obj in params_objs.items():
+        value = getattr(op, name)
+        value_config = param_obj.to_config(value)
+        params[name] = value_config
     config['params'] = params
 
     return config

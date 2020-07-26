@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Tuple
 
 import numpy as np
 import pytest
@@ -176,3 +176,31 @@ def test_get_operator_config_params_values():
     op.param2 = 3.5
     config = get_operator_config(op)
     assert config['params'] == {'param1': 5, 'param2': 3.5}
+
+
+class ComplexTestParameter(Parameter[Tuple[int, int]]):
+    def from_config(self, config: Any) -> Tuple[int, int]:
+        return config['val1'], config['val2']
+
+    def to_config(self, value: Tuple[int, int]) -> Any:
+        return {'val1': value[0], 'val2': value[1]}
+
+
+class ComplexTestOperator(Operator):
+    some_param = ComplexTestParameter((1, 2))
+
+
+def test_complex_parameter_config():
+    op = ComplexTestOperator()
+    config = get_operator_config(op)
+    assert config['params'] == {'some_param': {'val1': 1, 'val2': 2}}
+
+
+def test_complex_parameter_parsing():
+    op = ComplexTestOperator()
+    config = get_operator_config(op)
+    config['params']['some_param']['val1'] = 10
+    config['params']['some_param']['val2'] = 20
+
+    parsed_op = create_operator(config)
+    assert parsed_op.some_param == (10, 20)
