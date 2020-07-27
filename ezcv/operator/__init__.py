@@ -1,4 +1,4 @@
-from typing import Type, List
+from typing import Type
 
 from .core import *
 from . import implementations
