@@ -55,7 +55,7 @@ pipeline:
 This pipeline takes an image, transforms it from BGR to grayscale and blurs it.
 
 Config files are created using [ezCV-GUI](https://github.com/fredtcaroli/ezCV-GUI/), but there shouldn't 
-any reasons why not to write or edit them manually.
+be any reasons why not to write or edit them manually.
 
 ##### Executing Pipelines
 
