@@ -35,6 +35,8 @@ This is just a brief documentation of what I've done so far.
 Here's what an ezCV config file looks like:
 
 ```yaml
+# config.yml
+
 version: '0.0'
 
 pipeline:
@@ -83,10 +85,10 @@ Creating an operator should be easy. Let's implement one.
 The goal of this operator is to threshold a grayscale image, given a threshold value and method:
 
 ```python
-import numpy as np
 import cv2
 from ezcv.operator import Operator, EnumParameter, IntegerParameter
 from ezcv.pipeline import PipelineContext
+from ezcv.typing import Image
 
 class ThresholdOperator(Operator):
     """ Applies a Threshold operation
@@ -98,7 +100,7 @@ class ThresholdOperator(Operator):
     threshold = IntegerParameter(default_value=127, lower=0, upper=255)
     method = EnumParameter(possible_values=["binary", "otsu"], default_value="binary")
 
-    def run(self, img: np.ndarray, ctx: PipelineContext):
+    def run(self, img: Image, ctx: PipelineContext) -> Image:
         flags = cv2.THRESH_BINARY
         if self.method == 'otsu':
             flags += cv2.THRESH_OTSU
@@ -106,26 +108,11 @@ class ThresholdOperator(Operator):
         return output
 ```
 
-Now you can use your operator, either by writing a config file just like the one showed before,
-or directly instantiating it and saving the pipeline:
-
-```python
-from ezcv import CompVizPipeline
-from ezcv.operator.implementations.color_space import ColorSpaceChange
-
-from path.to.operator import ThresholdOperator
-
-pipeline = CompVizPipeline()
-
-pipeline.add_operator('bgr2gray', ColorSpaceChange())
-pipeline.add_operator('threshold', ThresholdOperator())
-with open('custom_config.yml', 'w') as f:
-    pipeline.save(f)
-```
-
-Now we can inspect the `custom_config.yml` file to find
+Now you can use your operator by writing a config file just like the one showed before:
 
 ```yaml
+#custom_operator_config.yml
+
 version: '0.0'
 
 pipeline:
@@ -164,9 +151,9 @@ So here's the operator implementations:
 ```python
 from typing import Tuple, Dict
 
-import numpy as np
 from ezcv.operator import Operator, Parameter
 from ezcv.pipeline import PipelineContext
+from ezcv.typing import Image
 
 
 class CoordinateParameter(Parameter[Tuple[int, int]]):
@@ -182,7 +169,7 @@ class CoordinateParameter(Parameter[Tuple[int, int]]):
 class ColorPicker(Operator):
     coord = CoordinateParameter(default_value=(0, 0))
 
-    def run(self, img: np.ndarray, ctx: PipelineContext):
+    def run(self, img: Image, ctx: PipelineContext) -> Image:
         x, y = self.coord
         color = img[y, x]
         ctx.add_info('color', color)
@@ -195,37 +182,11 @@ So there's a lot going on. Let's cover some points:
 will ensure that your parameters will have the correct type inferred when coding on an 
 advanced IDE or using mypy.
 * Our custom parameter defines two methods, one for encoding your parameter and the other
-to decode it. We know the chosen encoding is not really optimal, but we're really just showing
-what you can do.
+to decode it.
 * Our color picker operator adds the color information to the pipeline context. 
 
 So without further ado, let's show how you can use this piece. First let's build the
 CV pipeline.
-
-```python
-from ezcv import CompVizPipeline
-from path.to.operator import ColorPicker
-
-pipeline = CompVizPipeline()
-pipeline.add_operator('color_picker', ColorPicker())
-```
-
-Now let's see how we can run it and check the picked color.
-
-```python
-import cv2
-
-img = cv2.imread('example_img.png')
-output, ctx = pipeline.run(img)
-print(ctx.info['color_picker']['color'])  # prints the picked color
-```
-
-Now let's save it and inspect the config file.
-
-```python
-with open('color_picker.yml', 'w') as f:
-    pipeline.save(f)
-```
 
 ```yaml
 # color_picker.yml
@@ -238,8 +199,33 @@ pipeline:
       implementation: path.to.operator.ColorPicker
       params:
         coord:
-          x: 0
-          y: 0
+          x: 30
+          y: 30
+```
+
+Now let's see how we can run it and check the picked color.
+
+```python
+import cv2
+from ezcv import CompVizPipeline
+
+with open('color_picker.yml') as f:
+    pipeline = CompVizPipeline.load(f)
+
+img = cv2.imread('example_img.png')
+output, ctx = pipeline.run(img)
+print(ctx.info['color_picker']['color'])  # prints the picked color
+```
+
+You can also change the operator's parameters value programmatically:
+
+```python
+pipeline.operators['color_picker'].coord = (10, 10)
+output, ctx = pipeline.run(img)
+print(ctx.info['color_picker']['color'])  # prints a different color
+
+with open('color_picker.yml', 'w') as f:
+    pipeline.save(f)  # saves updated parameter
 ```
 
 And there you have it :)

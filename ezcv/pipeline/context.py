@@ -1,14 +1,12 @@
-from collections import OrderedDict
 from contextlib import contextmanager
 from typing import ContextManager, Any
 
-import numpy as np
-
+from ezcv.typing import Image
 from ezcv.utils import is_image
 
 
 class PipelineContext(object):
-    def __init__(self, original_img: np.ndarray):
+    def __init__(self, original_img: Image):
         if not is_image(original_img):
             raise ValueError('Invalid original image')
         self.original_img = original_img.copy()

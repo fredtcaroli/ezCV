@@ -1,5 +1,4 @@
 import collections
-import numpy as np
 from typing import TextIO, Tuple
 
 import yaml
@@ -7,13 +6,14 @@ import yaml
 import ezcv.operator as op_lib
 from ezcv import utils
 from ezcv.pipeline.context import PipelineContext
+from ezcv.typing import Image
 
 
 class CompVizPipeline(object):
     def __init__(self):
         self.operators = collections.OrderedDict()
 
-    def run(self, img: np.ndarray) -> Tuple[np.ndarray, PipelineContext]:
+    def run(self, img: Image) -> Tuple[Image, PipelineContext]:
         self._raise_if_invalid_img(img)
         last = img
         ctx = PipelineContext(img)
@@ -24,7 +24,7 @@ class CompVizPipeline(object):
                 raise ValueError('Invalid return value from "%s": "%s"' % (name, str(last)))
         return last, ctx
 
-    def _raise_if_invalid_img(self, img: np.ndarray):
+    def _raise_if_invalid_img(self, img: Image):
         if not utils.is_image(img):
             raise ValueError('Invalid image provided')
 

@@ -2,13 +2,13 @@ import functools
 from typing import Callable
 
 import cv2
-import numpy as np
 
 from ezcv.operator import Operator, EnumParameter, register_operator
 from ezcv.pipeline import PipelineContext
+from ezcv.typing import Image
 
 
-def _space_transformer(keys) -> Callable[[np.ndarray], np.ndarray]:
+def _space_transformer(keys) -> Callable[[Image], Image]:
     if not isinstance(keys, list):
         keys = [keys]
 
@@ -19,7 +19,7 @@ def _space_transformer(keys) -> Callable[[np.ndarray], np.ndarray]:
         else:
             transforms.append(functools.partial(cv2.cvtColor, code=cvt_key))
 
-    def all_transforms(img: np.ndarray) -> np.ndarray:
+    def all_transforms(img: Image) -> Image:
         last = img
         for transform in transforms:
             last = transform(last)
@@ -74,5 +74,5 @@ class ColorSpaceChange(Operator):
         }
     }
 
-    def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
+    def run(self, img: Image, ctx: PipelineContext) -> Image:
         return self._space_transformer_dict[self.src][self.target](img)

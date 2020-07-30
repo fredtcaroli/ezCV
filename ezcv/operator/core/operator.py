@@ -1,6 +1,7 @@
 import numpy as np
 
 from ezcv.pipeline import PipelineContext
+from ezcv.typing import Image
 
 
 class Operator(object):
@@ -8,5 +9,5 @@ class Operator(object):
 
     Extend this class to implement new functionality
     """
-    def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
+    def run(self, img: Image, ctx: PipelineContext) -> Image:
         raise NotImplementedError()
