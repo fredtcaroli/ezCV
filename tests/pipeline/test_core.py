@@ -1,7 +1,7 @@
 import re
 from io import StringIO
 from typing import Any
-from unittest.mock import patch, ANY, call, Mock
+from unittest.mock import patch, Mock
 
 import numpy as np
 import pytest
@@ -14,32 +14,48 @@ from ezcv.test_utils import build_img, parametrize_img, assert_terms_in_exceptio
 from ezcv.utils import is_image
 
 
+PARAM1_DEFAULT_VALUE = 10
+PARAM1_LOWER = 5
+PARAM1_UPPER = 15
+
+PARAM2_DEFAULT_VALUE = 3.3
+PARAM2_LOWER = 1
+PARAM2_UPPER = 11
+
+
 class TestOperator(Operator):
     def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
         return img + 1
 
-    param1 = IntegerParameter(default_value=10, lower=5, upper=15)
-    param2 = NumberParameter(default_value=3.3, lower=1, upper=10)
+    param1 = IntegerParameter(default_value=PARAM1_DEFAULT_VALUE, lower=PARAM1_LOWER, upper=PARAM1_UPPER)
+    param2 = NumberParameter(default_value=PARAM2_DEFAULT_VALUE, lower=PARAM2_LOWER, upper=PARAM2_UPPER)
+
+
+OP1_PARAM1 = 3
+OP1_PARAM2 = 1.5
+
+OP2_PARAM1 = 5
+OP2_PARAM2 = 1
 
 
 def get_config_stream():
-    config = """
+    config = f"""
         version: '0.0'
 
         pipeline:
           - name: op1
             config:
-              implementation: {operator}
+              implementation: {__name__}.TestOperator
               params:
-                param1: 3
-                param2: 1.5
+                param1: {OP1_PARAM1}
+                param2: {OP1_PARAM2}
           - name: op2
             config:
-              implementation: {operator}
+              implementation: {__name__}.TestOperator
               params:
-                param1: 5
-                param2: 1
-        """.format(operator=__name__ + '.TestOperator')
+                param1: {OP2_PARAM1}
+                param2: {OP2_PARAM2}
+        """
     stream = StringIO(config)
     return stream
 
@@ -52,42 +68,6 @@ def config_stream():
 def test_pipeline_load_return(config_stream):
     r = CompVizPipeline.load(config_stream)
     assert isinstance(r, CompVizPipeline)
-
-
-def test_pipeline_load_loaded_values():
-    config = """
-            version: '0.0'
-
-            pipeline:
-              - name: op1
-                config:
-                  implementation: {operator}
-                  params:
-                    param1: 3
-              - name: op2
-                config:
-                  implementation: {operator}
-                  params:
-                    param2: 1
-            """.format(operator=__name__ + '.TestOperator')
-    stream = StringIO(config)
-    pipeline = CompVizPipeline.load(stream)
-    assert pipeline.operators['op1'].param1 == 3
-    assert pipeline.operators['op1'].param2 == 3.3
-    assert pipeline.operators['op2'].param1 == 10
-    assert pipeline.operators['op2'].param2 == 1
-
-
-def test_pipeline_load_add_operator_calls(config_stream):
-    with patch('ezcv.pipeline.core.CompVizPipeline.add_operator') as mock:
-        _ = CompVizPipeline.load(config_stream)
-        assert mock.mock_calls == [call('op1', ANY), call('op2', ANY)]
-
-
-def test_pipeline_load_create_operator_calls(config_stream):
-    with patch('ezcv.operator.create_operator') as mock:
-        _ = CompVizPipeline.load(config_stream)
-        assert mock.call_count == 2
 
 
 def test_pipeline_has_operators():
@@ -117,14 +97,40 @@ def test_pipeline_operators_type(config_stream):
 def test_pipeline_operators_params(config_stream):
     pipeline = CompVizPipeline.load(config_stream)
     op1 = pipeline.operators['op1']
-    assert op1.param1 == 3 and op1.param2 == 1.5
+    assert op1.param1 == OP1_PARAM1 and op1.param2 == OP1_PARAM2
     op2 = pipeline.operators['op2']
-    assert op2.param1 == 5 and op2.param2 == 1.0
+    assert op2.param1 == OP2_PARAM1 and op2.param2 == OP2_PARAM2
+
+
+def test_pipeline_load_missing_values():
+    op1_param1_value = 3
+    op2_param2_value = 1
+    config = f"""
+            version: '0.0'
+
+            pipeline:
+              - name: op1
+                config:
+                  implementation: {__name__}.TestOperator
+                  params:
+                    param1: {op1_param1_value}
+              - name: op2
+                config:
+                  implementation: {__name__}.TestOperator
+                  params:
+                    param2: {op2_param2_value}
+            """
+    stream = StringIO(config)
+    pipeline = CompVizPipeline.load(stream)
+    assert pipeline.operators['op1'].param1 == op1_param1_value
+    assert pipeline.operators['op1'].param2 == PARAM2_DEFAULT_VALUE
+    assert pipeline.operators['op2'].param1 == PARAM1_DEFAULT_VALUE
+    assert pipeline.operators['op2'].param2 == op2_param2_value
 
 
 def test_pipeline_operators_invalid_name(config_stream):
     pipeline = CompVizPipeline.load(config_stream)
-    with pytest.raises(Exception):
+    with pytest.raises(KeyError):
         _ = pipeline.operators['invalid']
 
 
@@ -179,7 +185,7 @@ def test_pipeline_run_result(img, config_stream):
 @parametrize_img
 def test_pipeline_run_all_ops(img, config_stream):
     with patch(__name__ + '.TestOperator.run') as mock:
-        mock.side_effect = lambda img, ctx: img
+        mock.side_effect = lambda i, _: i
         pipeline = CompVizPipeline.load(config_stream)
         _ = pipeline.run(img)
         assert mock.call_count == 2
@@ -226,8 +232,6 @@ def test_pipeline_run_set_ctx_original_img():
 
 
 def test_pipeline_run_cant_alter_original_img():
-    img = build_img((128, 128), kind='black')
-
     class TestCtxOriginalImg(Operator):
         def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
             original_img = ctx.original_img
@@ -237,8 +241,9 @@ def test_pipeline_run_cant_alter_original_img():
     pipeline = CompVizPipeline()
     pipeline.add_operator('test_op', TestCtxOriginalImg())
 
+    test_img = build_img((128, 128), kind='black')
     with pytest.raises(ValueError) as e:
-        pipeline.run(img)
+        pipeline.run(test_img)
 
     assert_terms_in_exception(e, ['read-only'])
 
@@ -258,9 +263,9 @@ def test_pipeline_run_add_info_works():
     op_name2 = 'test_op2'
     pipeline.add_operator(op_name2, TestCtxAddInfo())
 
-    out, ctx = pipeline.run(build_img((16, 16)))
+    _, returned_ctx = pipeline.run(build_img((16, 16)))
 
-    assert ctx.info == {
+    expected_info = {
         op_name1: {
             info_name: info_value
         },
@@ -268,6 +273,9 @@ def test_pipeline_run_add_info_works():
             info_name: info_value
         }
     }
+    actual_info = returned_ctx.info
+
+    assert actual_info == expected_info
 
 
 def test_pipeline_run_empty_info(config_stream):
@@ -278,8 +286,6 @@ def test_pipeline_run_empty_info(config_stream):
         'op1': {},
         'op2': {}
     }
-
-
 
 
 @parametrize_img(kind='black')
@@ -417,4 +423,3 @@ def test_pipeline_save_op_config_return_from_get_operator_config(config_stream):
         config = yaml.safe_load(output_stream)
         assert config['pipeline'][0]['config'] == 'unique_value'
         assert config['pipeline'][1]['config'] == 'unique_value'
-
