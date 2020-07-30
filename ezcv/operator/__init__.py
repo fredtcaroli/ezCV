@@ -1,7 +1,6 @@
 from typing import Type
 
 from .core import *
-from . import implementations
 
 
 _OPERATORS = list()
@@ -16,3 +15,6 @@ def register_operator(cls: Type[Operator]) -> Type[Operator]:
         raise ValueError("%s is not an Operator" % str(cls))
     _OPERATORS.append(cls)
     return cls
+
+
+from . import implementations
