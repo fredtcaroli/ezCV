@@ -11,13 +11,15 @@ from ezcv.typing import Image
 
 class CompVizPipeline(object):
     def __init__(self):
-        self.operators = collections.OrderedDict()
+        self.operators = dict()
+        self._operators_order = list()
 
     def run(self, img: Image) -> Tuple[Image, PipelineContext]:
         self._raise_if_invalid_img(img)
         last = img
         ctx = PipelineContext(img)
-        for name, operator in self.operators.items():
+        for name in self._operators_order:
+            operator = self.operators[name]
             with ctx.scope(name):
                 last = operator.run(last, ctx)
             if not utils.is_image(last):
@@ -31,6 +33,15 @@ class CompVizPipeline(object):
     def add_operator(self, name: str, operator: op_lib.Operator):
         self._raise_if_name_is_unavailable(name)
         self.operators[name] = operator
+        self._operators_order.append(name)
+
+    def rename_operator(self, name: str, new_name: str):
+        if name not in self.operators:
+            raise ValueError(f'Unexistent operator name: "{name}"')
+        if new_name in self.operators:
+            raise ValueError(f'Operator name "{new_name}" already exists')
+        self._operators_order[self._operators_order.index(name)] = new_name
+        self.operators[new_name] = self.operators.pop(name)
 
     def _raise_if_name_is_unavailable(self, name: str):
         if name in self.operators:

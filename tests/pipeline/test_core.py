@@ -11,6 +11,7 @@ from ezcv import CompVizPipeline
 from ezcv.operator import Operator, IntegerParameter, NumberParameter
 from ezcv.pipeline.context import PipelineContext
 from ezcv.test_utils import build_img, parametrize_img, assert_terms_in_exception
+from ezcv.typing import Image
 from ezcv.utils import is_image
 
 
@@ -24,7 +25,7 @@ PARAM2_UPPER = 11
 
 
 class TestOperator(Operator):
-    def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
+    def run(self, img: Image, ctx: PipelineContext) -> Image:
         return img + 1
 
     param1 = IntegerParameter(default_value=PARAM1_DEFAULT_VALUE, lower=PARAM1_LOWER, upper=PARAM1_UPPER)
@@ -221,7 +222,7 @@ def test_pipeline_run_set_ctx_original_img():
     img_gray = build_img((128, 128), rgb=False)
 
     class TestCtxOriginalImgOperator(Operator):
-        def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
+        def run(self, img: Image, ctx: PipelineContext) -> Image:
             assert np.all(ctx.original_img == img)
             return img
 
@@ -233,7 +234,7 @@ def test_pipeline_run_set_ctx_original_img():
 
 def test_pipeline_run_cant_alter_original_img():
     class TestCtxOriginalImg(Operator):
-        def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
+        def run(self, img: Image, ctx: PipelineContext) -> Image:
             original_img = ctx.original_img
             original_img[10, ...] = 255
             return img
@@ -253,7 +254,7 @@ def test_pipeline_run_add_info_works():
     info_value = object()
 
     class TestCtxAddInfo(Operator):
-        def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
+        def run(self, img: Image, ctx: PipelineContext) -> Image:
             ctx.add_info(info_name, info_value)
             return img
 
@@ -423,3 +424,88 @@ def test_pipeline_save_op_config_return_from_get_operator_config(config_stream):
         config = yaml.safe_load(output_stream)
         assert config['pipeline'][0]['config'] == 'unique_value'
         assert config['pipeline'][1]['config'] == 'unique_value'
+
+
+def test_pipeline_execution_order():
+    counter = 0
+
+    class OrderAsserter(Operator):
+        def __init__(self, expected_count: int):
+            super().__init__()
+            self.expected_count = expected_count
+
+        def run(self, img: Image, ctx: PipelineContext) -> Image:
+            nonlocal counter
+            assert counter == self.expected_count
+            counter += 1
+            return img
+
+    pipeline = CompVizPipeline()
+    pipeline.add_operator('op1', OrderAsserter(0))
+    pipeline.add_operator('op2', OrderAsserter(1))
+    pipeline.add_operator('op3', OrderAsserter(2))
+
+    pipeline.run(build_img((16, 16)))
+
+
+def test_rename_operator():
+    pipeline = CompVizPipeline()
+    starting_name = 'some_name'
+    new_name = 'another_name'
+    op = TestOperator()
+    pipeline.add_operator(starting_name, op)
+    pipeline.add_operator('foo', TestOperator())
+    pipeline.add_operator('bar', TestOperator())
+
+    expected_len = len(pipeline.operators)
+
+    pipeline.rename_operator(starting_name, new_name)
+
+    assert len(pipeline.operators) == expected_len
+    assert new_name in pipeline.operators
+    assert pipeline.operators[new_name] is op
+
+
+def test_rename_keeps_operators_order():
+    counter = 0
+
+    class OrderAsserter(Operator):
+        def __init__(self, expected_count: int):
+            super().__init__()
+            self.expected_count = expected_count
+
+        def run(self, img: Image, ctx: PipelineContext) -> Image:
+            nonlocal counter
+            assert counter == self.expected_count
+            counter += 1
+            return img
+
+    pipeline = CompVizPipeline()
+    pipeline.add_operator('op1', OrderAsserter(0))
+    pipeline.add_operator('op2', OrderAsserter(1))
+    pipeline.add_operator('op3', OrderAsserter(2))
+
+    pipeline.rename_operator('op2', 'new_name')
+
+    pipeline.run(build_img((16, 16)))
+
+
+def test_rename_nonexistent_name():
+    pipeline = CompVizPipeline()
+
+    with pytest.raises(ValueError) as e:
+        pipeline.rename_operator('nonexistent', 'foo')
+
+    assert_terms_in_exception(e, ['operator', 'name'])
+
+
+def test_rename_to_existent_name():
+    pipeline = CompVizPipeline()
+
+    pipeline.add_operator('op1', TestOperator())
+    pipeline.add_operator('op2', TestOperator())
+
+    with pytest.raises(ValueError) as e:
+        pipeline.rename_operator('op1', 'op2')
+
+    assert_terms_in_exception(e, ['name', 'exist'])
