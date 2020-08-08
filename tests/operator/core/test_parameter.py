@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from ezcv.operator import Parameter, IntegerParameter, NumberParameter, EnumParameter
+from ezcv.operator import Parameter, IntegerParameter, DoubleParameter, EnumParameter
 from ezcv.test_utils import assert_terms_in_exception
 
 
@@ -12,8 +12,8 @@ def integer_param():
 
 
 @pytest.fixture(scope='module')
-def number_param():
-    return NumberParameter(default_value=2.5, lower=1, upper=10)
+def double_param():
+    return DoubleParameter(default_value=2.5, lower=1, upper=10)
 
 
 def test_parameter_not_implemented_from_config():
@@ -157,9 +157,9 @@ def test_integer_parameter_invalid_default_value(default_value):
     tuple(),
     list()
 ])
-def test_number_parameter_from_config_invalid_config(config, number_param):
+def test_double_parameter_from_config_invalid_config(config, double_param):
     with pytest.raises(AssertionError):
-        number_param.from_config(config)
+        double_param.from_config(config)
 
 
 @pytest.mark.parametrize('config', [
@@ -185,8 +185,8 @@ def test_number_parameter_from_config_invalid_config(config, number_param):
     float('inf'),
     float('-inf')
 ])
-def test_number_parameter_from_config_valid_config(config, number_param):
-    assert config == number_param.from_config(config)
+def test_double_parameter_from_config_valid_config(config, double_param):
+    assert config == double_param.from_config(config)
 
 
 @pytest.mark.parametrize('value', [
@@ -199,9 +199,9 @@ def test_number_parameter_from_config_valid_config(config, number_param):
     tuple(),
     list()
 ])
-def test_number_parameter_to_config_invalid_config(value, number_param):
+def test_double_parameter_to_config_invalid_config(value, double_param):
     with pytest.raises(AssertionError):
-        number_param.to_config(value)
+        double_param.to_config(value)
 
 
 @pytest.mark.parametrize('value', [
@@ -227,8 +227,8 @@ def test_number_parameter_to_config_invalid_config(value, number_param):
     float('inf'),
     float('-inf')
 ])
-def test_number_parameter_to_config_valid_config(value, number_param):
-    assert value == number_param.to_config(value)
+def test_double_parameter_to_config_valid_config(value, double_param):
+    assert value == double_param.to_config(value)
 
 
 @pytest.mark.parametrize('limits', [
@@ -238,8 +238,8 @@ def test_number_parameter_to_config_valid_config(value, number_param):
     (2.3, 5.4),
     (-10.2, 2.4)
 ])
-def test_number_parameter_valid_upper_lower_limits(limits):
-    NumberParameter(default_value=5, lower=limits[0], upper=limits[1])
+def test_double_parameter_valid_upper_lower_limits(limits):
+    DoubleParameter(default_value=5, lower=limits[0], upper=limits[1])
 
 
 @pytest.mark.parametrize('limits', [
@@ -248,9 +248,9 @@ def test_number_parameter_valid_upper_lower_limits(limits):
     ('not a number', 5),
     (5, 'not a number')
 ])
-def test_number_parameter_invalid_lower_upper_limits(limits):
+def test_double_parameter_invalid_lower_upper_limits(limits):
     with pytest.raises(ValueError) as e:
-        NumberParameter(default_value=5, lower=limits[0], upper=limits[1])
+        DoubleParameter(default_value=5, lower=limits[0], upper=limits[1])
 
     assert_terms_in_exception(e, ['invalid'])
 
@@ -271,8 +271,8 @@ def test_number_parameter_invalid_lower_upper_limits(limits):
     float('inf'),
     float('-inf')
 ])
-def test_number_parameter_valid_default_value(value):
-    NumberParameter(default_value=value, lower=0, upper=5)
+def test_double_parameter_valid_default_value(value):
+    DoubleParameter(default_value=value, lower=0, upper=5)
 
 
 @pytest.mark.parametrize('value', [
@@ -285,9 +285,9 @@ def test_number_parameter_valid_default_value(value):
     tuple(),
     list()
 ])
-def test_number_parameter_invalid_default_value(value):
+def test_double_parameter_invalid_default_value(value):
     with pytest.raises(ValueError) as e:
-        NumberParameter(default_value=value, lower=0, upper=5)
+        DoubleParameter(default_value=value, lower=0, upper=5)
     assert_terms_in_exception(e, ['invalid', 'default'])
 
 

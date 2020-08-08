@@ -31,7 +31,7 @@ class IntegerParameter(Parameter[int]):
         if lower >= upper:
             raise ValueError('Invalid lower and upper limits: (%d, %d)' % (lower, upper))
         self.lower = lower
-        self.high = upper
+        self.upper = upper
 
     def from_config(self, config: Any) -> int:
         assert isinstance(config, int)
@@ -42,7 +42,7 @@ class IntegerParameter(Parameter[int]):
         return value
 
 
-class NumberParameter(Parameter[float]):
+class DoubleParameter(Parameter[float]):
     def __init__(self, default_value: float, lower: float, upper: float):
         if not isinstance(default_value, (float, int)):
             raise ValueError('Invalid default_value: %s' % str(default_value))
@@ -54,7 +54,7 @@ class NumberParameter(Parameter[float]):
         if lower >= upper:
             raise ValueError('Invalid lower and upper limits: (%d, %d)' % (lower, upper))
         self.lower = lower
-        self.high = upper
+        self.upper = upper
 
     def from_config(self, config: Any) -> float:
         assert isinstance(config, (float, int))

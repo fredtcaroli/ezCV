@@ -6,7 +6,7 @@ from pytest import fixture
 
 from ezcv.operator.core.config import create_operator, get_operator_config
 from ezcv.operator.core.operator import Operator
-from ezcv.operator.core.parameter import IntegerParameter, NumberParameter, Parameter
+from ezcv.operator.core.parameter import IntegerParameter, DoubleParameter, Parameter
 from ezcv.pipeline import PipelineContext
 from ezcv.test_utils import assert_terms_in_exception
 
@@ -15,7 +15,7 @@ unique_object = object()
 
 class TestOperator(Operator):
     param1 = IntegerParameter(default_value=10, lower=0, upper=15)
-    param2 = NumberParameter(default_value=5.3, lower=0, upper=15)
+    param2 = DoubleParameter(default_value=5.3, lower=0, upper=15)
     non_param = unique_object
 
     def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:

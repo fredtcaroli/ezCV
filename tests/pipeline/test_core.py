@@ -8,7 +8,7 @@ import pytest
 import yaml
 
 from ezcv import CompVizPipeline
-from ezcv.operator import Operator, IntegerParameter, NumberParameter
+from ezcv.operator import Operator, IntegerParameter, DoubleParameter
 from ezcv.pipeline.context import PipelineContext
 from ezcv.test_utils import build_img, parametrize_img, assert_terms_in_exception
 from ezcv.typing import Image
@@ -29,7 +29,7 @@ class TestOperator(Operator):
         return img + 1
 
     param1 = IntegerParameter(default_value=PARAM1_DEFAULT_VALUE, lower=PARAM1_LOWER, upper=PARAM1_UPPER)
-    param2 = NumberParameter(default_value=PARAM2_DEFAULT_VALUE, lower=PARAM2_LOWER, upper=PARAM2_UPPER)
+    param2 = DoubleParameter(default_value=PARAM2_DEFAULT_VALUE, lower=PARAM2_LOWER, upper=PARAM2_UPPER)
 
 
 OP1_PARAM1 = 3
