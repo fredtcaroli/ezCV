@@ -3,7 +3,7 @@ from typing import Generic, TypeVar, Any, List
 T = TypeVar('T')
 
 
-class Parameter(Generic[T]):
+class ParameterSpec(Generic[T]):
     def __init__(self, default_value: T):
         self.default_value = default_value
 
@@ -19,7 +19,7 @@ class Parameter(Generic[T]):
         return self.default_value
 
 
-class IntegerParameter(Parameter[int]):
+class IntegerParameter(ParameterSpec[int]):
     def __init__(self, default_value: int, lower: int, upper: int):
         if not isinstance(default_value, int):
             raise ValueError('Invalid default_value: %s' % str(default_value))
@@ -42,7 +42,7 @@ class IntegerParameter(Parameter[int]):
         return value
 
 
-class DoubleParameter(Parameter[float]):
+class DoubleParameter(ParameterSpec[float]):
     def __init__(self, default_value: float, lower: float, upper: float):
         if not isinstance(default_value, (float, int)):
             raise ValueError('Invalid default_value: %s' % str(default_value))
@@ -65,7 +65,7 @@ class DoubleParameter(Parameter[float]):
         return float(value)
 
 
-class EnumParameter(Parameter[str]):
+class EnumParameter(ParameterSpec[str]):
     def __init__(self, possible_values: List[str], default_value: str):
         if default_value not in possible_values:
             raise ValueError('Invalid default value: "%s". Possible values are: %s' %

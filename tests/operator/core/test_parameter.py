@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from ezcv.operator import Parameter, IntegerParameter, DoubleParameter, EnumParameter
+from ezcv.operator import ParameterSpec, IntegerParameter, DoubleParameter, EnumParameter
 from ezcv.test_utils import assert_terms_in_exception
 
 
@@ -17,14 +17,14 @@ def double_param():
 
 
 def test_parameter_not_implemented_from_config():
-    param = Parameter(default_value=None)
+    param = ParameterSpec(default_value=None)
 
     with pytest.raises(NotImplementedError):
         param.from_config(None)
 
 
 def test_parameter_not_implemented_to_config():
-    param = Parameter(default_value=None)
+    param = ParameterSpec(default_value=None)
 
     with pytest.raises(NotImplementedError):
         param.to_config(None)
@@ -293,7 +293,7 @@ def test_double_parameter_invalid_default_value(value):
 
 def TestDefaultParameterHelper(value: Any):
     class SomeClass(object):
-        param = Parameter(default_value=value)
+        param = ParameterSpec(default_value=value)
     return SomeClass()
 
 
@@ -314,14 +314,14 @@ def test_parameter_default_value_not_returned_when_there_is_no_instance():
     default_value = object()
 
     class SomeClass(object):
-        param = Parameter(default_value=default_value)
+        param = ParameterSpec(default_value=default_value)
 
-    assert isinstance(SomeClass.param, Parameter) and SomeClass.param != default_value
+    assert isinstance(SomeClass.param, ParameterSpec) and SomeClass.param != default_value
 
 
 def test_parameter_can_get_default_value():
     default_value = object()
-    param = Parameter(default_value=default_value)
+    param = ParameterSpec(default_value=default_value)
     assert param.default_value is default_value
 
 

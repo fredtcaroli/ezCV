@@ -1,14 +1,14 @@
 from typing import Any, Tuple
 
-import numpy as np
 import pytest
 from pytest import fixture
 
-from ezcv.operator.core.config import create_operator, get_operator_config
+from ezcv.operator.core.config import create_operator, get_operator_config, get_parameters_specs
 from ezcv.operator.core.operator import Operator
-from ezcv.operator.core.parameter import IntegerParameter, DoubleParameter, Parameter
+from ezcv.operator.core.parameter import IntegerParameter, DoubleParameter, ParameterSpec
 from ezcv.pipeline import PipelineContext
 from ezcv.test_utils import assert_terms_in_exception
+from ezcv.typing import Image
 
 unique_object = object()
 
@@ -18,7 +18,7 @@ class TestOperator(Operator):
     param2 = DoubleParameter(default_value=5.3, lower=0, upper=15)
     non_param = unique_object
 
-    def run(self, img: np.ndarray, ctx: PipelineContext) -> np.ndarray:
+    def run(self, img: Image, ctx: PipelineContext) -> Image:
         raise NotImplementedError()
 
 
@@ -108,7 +108,7 @@ def test_create_operator_not_an_operator(config):
 
 def test_create_operator_invalid_parameter_value(config):
 
-    class FailingParameter(Parameter):
+    class FailingParameter(ParameterSpec):
 
         def to_config(self, value: Any) -> Any:
             raise NotImplementedError()
@@ -178,7 +178,7 @@ def test_get_operator_config_params_values():
     assert config['params'] == {'param1': 5, 'param2': 3.5}
 
 
-class ComplexTestParameter(Parameter[Tuple[int, int]]):
+class ComplexTestParameter(ParameterSpec[Tuple[int, int]]):
     def from_config(self, config: Any) -> Tuple[int, int]:
         return config['val1'], config['val2']
 
@@ -204,3 +204,19 @@ def test_complex_parameter_parsing():
 
     parsed_op = create_operator(config)
     assert parsed_op.some_param == (10, 20)
+
+
+class TestGetParametersSpecs:
+    def test_golden(self):
+        params = get_parameters_specs(TestOperator)
+        assert len(params) == 2
+        assert 'param1' in params and params['param1'] is TestOperator.param1
+        assert 'param2' in params and params['param2'] is TestOperator.param2
+
+    def test_no_params(self):
+        class NoParamsOperator(Operator):
+            def run(self, img: Image, ctx: PipelineContext) -> Image:
+                pass
+
+        params = get_parameters_specs(NoParamsOperator)
+        assert len(params) == 0

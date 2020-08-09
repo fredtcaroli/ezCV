@@ -151,12 +151,12 @@ So here's the operator implementations:
 ```python
 from typing import Tuple, Dict
 
-from ezcv.operator import Operator, Parameter
+from ezcv.operator import Operator, ParameterSpec
 from ezcv.pipeline import PipelineContext
 from ezcv.typing import Image
 
 
-class CoordinateParameter(Parameter[Tuple[int, int]]):
+class CoordinateParameter(ParameterSpec[Tuple[int, int]]):
     def to_config(self, value: Tuple[int, int]) -> Dict[str, int]:
         return {
             'x': value[0],
@@ -178,7 +178,7 @@ class ColorPicker(Operator):
 
 So there's a lot going on. Let's cover some points:
 
-* We added a lot of typing. We love typing. Inheriting from `Parameter[Tuple[int, int]]`
+* We added a lot of typing. We love typing. Inheriting from `ParameterSpec[Tuple[int, int]]`
 will ensure that your parameters will have the correct type inferred when coding on an 
 advanced IDE or using mypy.
 * Our custom parameter defines two methods, one for encoding your parameter and the other
