@@ -426,7 +426,8 @@ def test_pipeline_save_op_config_return_from_get_operator_config(config_stream):
         assert config['pipeline'][1]['config'] == 'unique_value'
 
 
-def test_pipeline_execution_order():
+@pytest.fixture
+def order_asserter_operator():
     counter = 0
 
     class OrderAsserter(Operator):
@@ -440,72 +441,78 @@ def test_pipeline_execution_order():
             counter += 1
             return img
 
+    return OrderAsserter
+
+
+def test_pipeline_execution_order(order_asserter_operator):
     pipeline = CompVizPipeline()
-    pipeline.add_operator('op1', OrderAsserter(0))
-    pipeline.add_operator('op2', OrderAsserter(1))
-    pipeline.add_operator('op3', OrderAsserter(2))
+    pipeline.add_operator('op1', order_asserter_operator(0))
+    pipeline.add_operator('op2', order_asserter_operator(1))
+    pipeline.add_operator('op3', order_asserter_operator(2))
 
     pipeline.run(build_img((16, 16)))
 
 
-def test_rename_operator():
-    pipeline = CompVizPipeline()
-    starting_name = 'some_name'
-    new_name = 'another_name'
-    op = TestOperator()
-    pipeline.add_operator(starting_name, op)
-    pipeline.add_operator('foo', TestOperator())
-    pipeline.add_operator('bar', TestOperator())
+class TestRenameOperator:
+    def test_rename_operator(self):
+        pipeline = CompVizPipeline()
+        starting_name = 'some_name'
+        new_name = 'another_name'
+        op = TestOperator()
+        pipeline.add_operator(starting_name, op)
+        pipeline.add_operator('foo', TestOperator())
+        pipeline.add_operator('bar', TestOperator())
 
-    expected_len = len(pipeline.operators)
+        expected_len = len(pipeline.operators)
 
-    pipeline.rename_operator(starting_name, new_name)
+        pipeline.rename_operator(starting_name, new_name)
 
-    assert len(pipeline.operators) == expected_len
-    assert new_name in pipeline.operators
-    assert pipeline.operators[new_name] is op
+        assert len(pipeline.operators) == expected_len
+        assert new_name in pipeline.operators
+        assert pipeline.operators[new_name] is op
 
+    def test_rename_keeps_operators_order(self, order_asserter_operator):
+        pipeline = CompVizPipeline()
+        pipeline.add_operator('op1', order_asserter_operator(0))
+        pipeline.add_operator('op2', order_asserter_operator(1))
+        pipeline.add_operator('op3', order_asserter_operator(2))
 
-def test_rename_keeps_operators_order():
-    counter = 0
+        pipeline.rename_operator('op2', 'new_name')
 
-    class OrderAsserter(Operator):
-        def __init__(self, expected_count: int):
-            super().__init__()
-            self.expected_count = expected_count
+        pipeline.run(build_img((16, 16)))
 
-        def run(self, img: Image, ctx: PipelineContext) -> Image:
-            nonlocal counter
-            assert counter == self.expected_count
-            counter += 1
-            return img
+    def test_rename_nonexistent_name(self):
+        pipeline = CompVizPipeline()
 
-    pipeline = CompVizPipeline()
-    pipeline.add_operator('op1', OrderAsserter(0))
-    pipeline.add_operator('op2', OrderAsserter(1))
-    pipeline.add_operator('op3', OrderAsserter(2))
+        with pytest.raises(ValueError) as e:
+            pipeline.rename_operator('nonexistent', 'foo')
 
-    pipeline.rename_operator('op2', 'new_name')
+        assert_terms_in_exception(e, ['operator', 'name'])
 
-    pipeline.run(build_img((16, 16)))
+    def test_rename_to_existent_name(self):
+        pipeline = CompVizPipeline()
 
+        pipeline.add_operator('op1', TestOperator())
+        pipeline.add_operator('op2', TestOperator())
 
-def test_rename_nonexistent_name():
-    pipeline = CompVizPipeline()
+        with pytest.raises(ValueError) as e:
+            pipeline.rename_operator('op1', 'op2')
 
-    with pytest.raises(ValueError) as e:
-        pipeline.rename_operator('nonexistent', 'foo')
+        assert_terms_in_exception(e, ['name', 'exist'])
 
-    assert_terms_in_exception(e, ['operator', 'name'])
+    def test_rename_keeps_saving_order(self):
+        pipeline = CompVizPipeline()
 
+        pipeline.add_operator('op1', TestOperator())
+        pipeline.add_operator('op2', TestOperator())
+        pipeline.add_operator('op3', TestOperator())
 
-def test_rename_to_existent_name():
-    pipeline = CompVizPipeline()
+        pipeline.rename_operator('op2', 'renamed')
 
-    pipeline.add_operator('op1', TestOperator())
-    pipeline.add_operator('op2', TestOperator())
+        stream = StringIO()
+        pipeline.save(stream)
+        stream.seek(0)
+        config = yaml.safe_load(stream)
 
-    with pytest.raises(ValueError) as e:
-        pipeline.rename_operator('op1', 'op2')
-
-    assert_terms_in_exception(e, ['name', 'exist'])
+        operators_order = [op_config['name'] for op_config in config['pipeline']]
+        assert operators_order == ['op1', 'renamed', 'op3']

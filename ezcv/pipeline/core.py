@@ -60,10 +60,11 @@ class CompVizPipeline(object):
         config = dict()
         config['version'] = '0.0'
         pipeline_config = list()
-        for name, op in self.operators.items():
+        for operator_name in self._operators_order:
+            operator = self.operators[operator_name]
             stage_config = dict()
-            stage_config['name'] = name
-            stage_config['config'] = op_lib.get_operator_config(op)
+            stage_config['name'] = operator_name
+            stage_config['config'] = op_lib.get_operator_config(operator)
             pipeline_config.append(stage_config)
         config['pipeline'] = pipeline_config
         yaml.safe_dump(config, stream, sort_keys=False)
