@@ -453,6 +453,15 @@ def test_pipeline_execution_order(order_asserter_operator):
     pipeline.run(build_img((16, 16)))
 
 
+def test_operators_property_order():
+    pipeline = CompVizPipeline()
+    pipeline.add_operator('op1', TestOperator())
+    pipeline.add_operator('op2', TestOperator())
+    pipeline.add_operator('op3', TestOperator())
+
+    assert list(pipeline.operators.keys()) == ['op1', 'op2', 'op3']
+
+
 class TestRenameOperator:
     def test_rename_operator(self):
         pipeline = CompVizPipeline()
@@ -499,6 +508,17 @@ class TestRenameOperator:
             pipeline.rename_operator('op1', 'op2')
 
         assert_terms_in_exception(e, ['name', 'exist'])
+
+    def test_rename_keeps_order(self):
+        pipeline = CompVizPipeline()
+
+        pipeline.add_operator('op1', TestOperator())
+        pipeline.add_operator('op2', TestOperator())
+        pipeline.add_operator('op3', TestOperator())
+
+        pipeline.rename_operator('op2', 'renamed')
+
+        assert list(pipeline.operators.keys()) == ['op1', 'renamed', 'op3']
 
     def test_rename_keeps_saving_order(self):
         pipeline = CompVizPipeline()
