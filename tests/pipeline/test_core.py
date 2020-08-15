@@ -507,7 +507,7 @@ class TestRenameOperator:
         with pytest.raises(ValueError) as e:
             pipeline.rename_operator('op1', 'op2')
 
-        assert_terms_in_exception(e, ['name', 'exist'])
+        assert_terms_in_exception(e, ['name'])
 
     def test_rename_keeps_order(self):
         pipeline = CompVizPipeline()

@@ -1,4 +1,4 @@
-from typing import TextIO, Tuple, Dict, List
+from typing import TextIO, Tuple, Dict, List, Optional
 
 import yaml
 
@@ -18,19 +18,14 @@ class CompVizPipeline(object):
         return {op_name: self._operators[op_name] for op_name in self._operators_order}
 
     def run(self, img: Image) -> Tuple[Image, PipelineContext]:
-        self._raise_if_invalid_img(img)
+        _raise_if_invalid_img(img)
         last = img
         ctx = PipelineContext(img)
         for name, operator in self.operators.items():
             with ctx.scope(name):
                 last = operator.run(last, ctx)
-            if not utils.is_image(last):
-                raise ValueError('Invalid return value from "%s": "%s"' % (name, str(last)))
+            _raise_if_invalid_img(last, returned_from=name)
         return last, ctx
-
-    def _raise_if_invalid_img(self, img: Image):
-        if not utils.is_image(img):
-            raise ValueError('Invalid image provided')
 
     def add_operator(self, name: str, operator: op_lib.Operator):
         self._raise_if_name_is_unavailable(name)
@@ -40,8 +35,7 @@ class CompVizPipeline(object):
     def rename_operator(self, name: str, new_name: str):
         if name not in self._operators:
             raise ValueError(f'Unexistent operator name: "{name}"')
-        if new_name in self._operators:
-            raise ValueError(f'Operator name "{new_name}" already exists')
+        self._raise_if_name_is_unavailable(new_name)
         self._operators_order[self._operators_order.index(name)] = new_name
         self._operators[new_name] = self._operators.pop(name)
 
@@ -69,3 +63,12 @@ class CompVizPipeline(object):
             pipeline_config.append(stage_config)
         config['pipeline'] = pipeline_config
         yaml.safe_dump(config, stream, sort_keys=False)
+
+
+def _raise_if_invalid_img(img: Image, returned_from: Optional[str] = None):
+    if not utils.is_image(img):
+        message = 'Invalid image'
+        if returned_from is not None:
+            message += f' returned from "{returned_from}"'
+        message += f': {img}'
+        raise ValueError(message)
