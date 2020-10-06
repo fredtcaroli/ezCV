@@ -10,6 +10,7 @@ import yaml
 from ezcv import CompVizPipeline
 from ezcv.operator import Operator, IntegerParameter, DoubleParameter
 from ezcv.pipeline.context import PipelineContext
+from ezcv.pipeline.core import OperatorFailedError, BadImageError
 from ezcv.test_utils import build_img, parametrize_img, assert_terms_in_exception
 from ezcv.typing import Image
 from ezcv.utils import is_image
@@ -170,7 +171,7 @@ def test_pipeline_run_return(img, pipeline):
 @parametrize_img(include_valid=False, include_invalid=True)
 def test_pipeline_run_invalid_img(img):
     pipeline = CompVizPipeline()
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(BadImageError) as e:
         pipeline.run(img)
 
     assert_terms_in_exception(e, ['invalid', 'image'])
@@ -211,7 +212,7 @@ def test_pipeline_run_check_op_return(return_value):
     pipeline = CompVizPipeline()
     pipeline.add_operator('test_op', TestWrongReturnOperator())
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(BadImageError) as e:
         pipeline.run(build_img((16, 16)))
 
     assert_terms_in_exception(e, ['return', 'invalid'])
@@ -243,7 +244,7 @@ def test_pipeline_run_cant_alter_original_img():
     pipeline.add_operator('test_op', TestCtxOriginalImg())
 
     test_img = build_img((128, 128), kind='black')
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(OperatorFailedError) as e:
         pipeline.run(test_img)
 
     assert_terms_in_exception(e, ['read-only'])
@@ -536,3 +537,15 @@ class TestRenameOperator:
 
         operators_order = [op_config['name'] for op_config in config['pipeline']]
         assert operators_order == ['op1', 'renamed', 'op3']
+
+
+def test_operator_fail():
+    class FailingOperator(Operator):
+        def run(self, img: Image, ctx: PipelineContext) -> Image:
+            raise ValueError('Failed')
+
+    pipeline = CompVizPipeline()
+    pipeline.add_operator('op', FailingOperator())
+
+    with pytest.raises(OperatorFailedError):
+        pipeline.run(build_img((16, 16)))

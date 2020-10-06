@@ -23,7 +23,10 @@ class CompVizPipeline(object):
         ctx = PipelineContext(img)
         for name, operator in self.operators.items():
             with ctx.scope(name):
-                last = operator.run(last, ctx)
+                try:
+                    last = operator.run(last, ctx)
+                except Exception as e:
+                    raise OperatorFailedError(f'Operator {name} failed to run with message "{e}"') from e
             _raise_if_invalid_img(last, returned_from=name)
         return last, ctx
 
@@ -71,4 +74,12 @@ def _raise_if_invalid_img(img: Image, returned_from: Optional[str] = None):
         if returned_from is not None:
             message += f' returned from "{returned_from}"'
         message += f': {img}'
-        raise ValueError(message)
+        raise BadImageError(message)
+
+
+class OperatorFailedError(Exception):
+    pass
+
+
+class BadImageError(Exception):
+    pass
