@@ -67,155 +67,116 @@ def config_stream():
     return get_config_stream()
 
 
-def test_pipeline_load_return(config_stream):
-    r = CompVizPipeline.load(config_stream)
-    assert isinstance(r, CompVizPipeline)
+class TestLoad:
+    def test_return_type(self, config_stream):
+        r = CompVizPipeline.load(config_stream)
+        assert isinstance(r, CompVizPipeline)
+
+    def test_create_pipeline_call(self):
+        unique_object = object()
+        with patch('ezcv.config.create_pipeline') as mock:
+            mock.return_value = unique_object
+            return_value = CompVizPipeline.load(get_config_stream())
+            mock.assert_called_with(yaml.safe_load(get_config_stream()))
+            assert return_value is unique_object
 
 
-def test_pipeline_has_operators():
-    pipeline = CompVizPipeline()
-    assert hasattr(pipeline, 'operators')
+class TestOperatorsProperty:
+    def test_pipeline_has_operators(self):
+        pipeline = CompVizPipeline()
+        assert hasattr(pipeline, 'operators')
 
+    def test_pipeline_operators_starts_empty(self):
+        pipeline = CompVizPipeline()
+        assert len(pipeline.operators) == 0
 
-def test_pipeline_operators_starts_empty():
-    pipeline = CompVizPipeline()
-    assert len(pipeline.operators) == 0
-
-
-def test_pipeline_operators_indexable(config_stream):
-    pipeline = CompVizPipeline.load(config_stream)
-    _ = pipeline.operators['op1']
-    _ = pipeline.operators['op2']
-
-
-def test_pipeline_operators_type(config_stream):
-    pipeline = CompVizPipeline.load(config_stream)
-    op1 = pipeline.operators['op1']
-    assert isinstance(op1, TestOperator)
-    op2 = pipeline.operators['op2']
-    assert isinstance(op2, TestOperator)
-
-
-def test_pipeline_operators_params(config_stream):
-    pipeline = CompVizPipeline.load(config_stream)
-    op1 = pipeline.operators['op1']
-    assert op1.param1 == OP1_PARAM1 and op1.param2 == OP1_PARAM2
-    op2 = pipeline.operators['op2']
-    assert op2.param1 == OP2_PARAM1 and op2.param2 == OP2_PARAM2
-
-
-def test_pipeline_load_missing_values():
-    op1_param1_value = 3
-    op2_param2_value = 1
-    config = f"""
-            version: '0.0'
-
-            pipeline:
-              - name: op1
-                config:
-                  implementation: {__name__}.TestOperator
-                  params:
-                    param1: {op1_param1_value}
-              - name: op2
-                config:
-                  implementation: {__name__}.TestOperator
-                  params:
-                    param2: {op2_param2_value}
-            """
-    stream = StringIO(config)
-    pipeline = CompVizPipeline.load(stream)
-    assert pipeline.operators['op1'].param1 == op1_param1_value
-    assert pipeline.operators['op1'].param2 == PARAM2_DEFAULT_VALUE
-    assert pipeline.operators['op2'].param1 == PARAM1_DEFAULT_VALUE
-    assert pipeline.operators['op2'].param2 == op2_param2_value
-
-
-def test_pipeline_operators_invalid_name(config_stream):
-    pipeline = CompVizPipeline.load(config_stream)
-    with pytest.raises(KeyError):
-        _ = pipeline.operators['invalid']
-
-
-def test_pipeline_add_operator_operators_count():
-    pipeline = CompVizPipeline()
-    pipeline.add_operator('test_op', TestOperator())
-    assert len(pipeline.operators) == 1
-
-
-def test_pipeline_add_operator_operators_name():
-    pipeline = CompVizPipeline()
-    pipeline.add_operator('test_op', TestOperator())
-    assert 'test_op' in pipeline.operators
-
-
-def test_pipeline_add_operator_duplicated_name():
-    pipeline = CompVizPipeline()
-    pipeline.add_operator('test_op', TestOperator())
-    with pytest.raises(ValueError) as e:
-        pipeline.add_operator('test_op', TestOperator())
-
-    assert_terms_in_exception(e, ['duplicated'])
-
-
-@parametrize_img
-@pytest.mark.parametrize('pipeline', [CompVizPipeline(), CompVizPipeline.load(get_config_stream())])
-def test_pipeline_run_return(img, pipeline):
-    r = pipeline.run(img)
-    assert isinstance(r, tuple)
-    assert len(r) == 2
-    out, ctx = r
-    assert is_image(out)
-    assert isinstance(ctx, PipelineContext)
-
-
-@parametrize_img(include_valid=False, include_invalid=True)
-def test_pipeline_run_invalid_img(img):
-    pipeline = CompVizPipeline()
-    with pytest.raises(BadImageError) as e:
-        pipeline.run(img)
-
-    assert_terms_in_exception(e, ['invalid', 'image'])
-
-
-@parametrize_img(kind='black')
-def test_pipeline_run_result(img, config_stream):
-    pipeline = CompVizPipeline.load(config_stream)
-    out, ctx = pipeline.run(img)
-    assert np.all(out == 2)
-
-
-@parametrize_img
-def test_pipeline_run_all_ops(img, config_stream):
-    with patch(__name__ + '.TestOperator.run') as mock:
-        mock.side_effect = lambda i, _: i
+    def test_pipeline_operators_indexable(self, config_stream):
         pipeline = CompVizPipeline.load(config_stream)
-        _ = pipeline.run(img)
-        assert mock.call_count == 2
+        _ = pipeline.operators['op1']
+        _ = pipeline.operators['op2']
+
+    def test_pipeline_operators_invalid_name(self, config_stream):
+        pipeline = CompVizPipeline.load(config_stream)
+        with pytest.raises(KeyError):
+            _ = pipeline.operators['invalid']
 
 
-@pytest.mark.parametrize('return_value', [
-    np.random.randint(0, 256, size=(16, 16), dtype='int64'),
-    np.random.randint(0, 256, size=(0, 16), dtype='uint8'),
-    np.random.randint(0, 256, size=(16, 0), dtype='uint8'),
-    np.random.randint(0, 256, size=(0, 0), dtype='uint8'),
-    np.random.randint(0, 256, size=(16, 16, 2), dtype='uint8'),
-    10,
-    None,
-    object(),
-    np.random.randint(0, 256, size=(10,), dtype='uint8')
-])
-def test_pipeline_run_check_op_return(return_value):
-    class TestWrongReturnOperator(Operator):
-        def run(self, img: np.ndarray, ctx: PipelineContext) -> Any:
-            return return_value
+class TestAddOperator:
+    def test_operators_count(self):
+        pipeline = CompVizPipeline()
+        pipeline.add_operator('test_op', TestOperator())
+        assert len(pipeline.operators) == 1
 
-    pipeline = CompVizPipeline()
-    pipeline.add_operator('test_op', TestWrongReturnOperator())
+    def test_operators_name(self):
+        pipeline = CompVizPipeline()
+        pipeline.add_operator('test_op', TestOperator())
+        assert 'test_op' in pipeline.operators
 
-    with pytest.raises(BadImageError) as e:
-        pipeline.run(build_img((16, 16)))
+    def test_duplicated_name(self):
+        pipeline = CompVizPipeline()
+        pipeline.add_operator('test_op', TestOperator())
+        with pytest.raises(ValueError) as e:
+            pipeline.add_operator('test_op', TestOperator())
 
-    assert_terms_in_exception(e, ['return', 'invalid'])
+        assert_terms_in_exception(e, ['duplicated'])
+
+
+class TestRun:
+    @parametrize_img
+    @pytest.mark.parametrize('pipeline', [CompVizPipeline(), CompVizPipeline.load(get_config_stream())])
+    def test_return_type(self, img, pipeline):
+        r = pipeline.run(img)
+        assert isinstance(r, tuple)
+        assert len(r) == 2
+        out, ctx = r
+        assert is_image(out)
+        assert isinstance(ctx, PipelineContext)
+
+    @parametrize_img(include_valid=False, include_invalid=True)
+    def test_invalid_img(self, img):
+        pipeline = CompVizPipeline()
+        with pytest.raises(BadImageError) as e:
+            pipeline.run(img)
+
+        assert_terms_in_exception(e, ['invalid', 'image'])
+
+    @parametrize_img(kind='black')
+    def test_result(self, img, config_stream):
+        pipeline = CompVizPipeline.load(config_stream)
+        out, ctx = pipeline.run(img)
+        assert np.all(out == 2)
+
+    @parametrize_img
+    def test_run_all_ops(self, img, config_stream):
+        with patch(__name__ + '.TestOperator.run') as mock:
+            mock.side_effect = lambda i, _: i
+            pipeline = CompVizPipeline.load(config_stream)
+            _ = pipeline.run(img)
+            assert mock.call_count == 2
+
+    @pytest.mark.parametrize('return_value', [
+        np.random.randint(0, 256, size=(16, 16), dtype='int64'),
+        np.random.randint(0, 256, size=(0, 16), dtype='uint8'),
+        np.random.randint(0, 256, size=(16, 0), dtype='uint8'),
+        np.random.randint(0, 256, size=(0, 0), dtype='uint8'),
+        np.random.randint(0, 256, size=(16, 16, 2), dtype='uint8'),
+        10,
+        None,
+        object(),
+        np.random.randint(0, 256, size=(10,), dtype='uint8')
+    ])
+    def test_check_op_return(self, return_value):
+        class TestWrongReturnOperator(Operator):
+            def run(self, img: np.ndarray, ctx: PipelineContext) -> Any:
+                return return_value
+
+        pipeline = CompVizPipeline()
+        pipeline.add_operator('test_op', TestWrongReturnOperator())
+
+        with pytest.raises(BadImageError) as e:
+            pipeline.run(build_img((16, 16)))
+
+        assert_terms_in_exception(e, ['return', 'invalid'])
 
 
 def test_pipeline_run_set_ctx_original_img():
@@ -333,98 +294,6 @@ def test_pipeline_save_writes():
     output_stream.write = Mock()
     pipeline.save(output_stream)
     output_stream.write.assert_called()
-
-
-@pytest.fixture
-def simple_config_string():
-    pipeline = CompVizPipeline()
-    output_stream = StringIO()
-    pipeline.save(output_stream)
-    output_stream.seek(0)
-    config_str = output_stream.read()
-    return config_str
-
-
-def test_pipeline_save_is_yaml(simple_config_string):
-    yaml.safe_load(StringIO(simple_config_string))
-
-
-def test_pipeline_save_version_exists(simple_config):
-    assert 'version' in simple_config
-
-
-@pytest.fixture
-def simple_config(simple_config_string):
-    return yaml.safe_load(StringIO(simple_config_string))
-
-
-def test_pipeline_save_version_is_version(simple_config):
-    assert re.match(r'\d+(\.\d+)*', simple_config['version'])
-
-
-def test_pipeline_save_version_is_right(simple_config):
-    assert simple_config['version'] == '0.0'
-
-
-def test_pipeline_save_pipeline_exists(simple_config):
-    assert 'pipeline' in simple_config
-
-
-def test_pipeline_save_pipeline_type(simple_config):
-    assert isinstance(simple_config['pipeline'], list)
-
-
-def test_pipeline_save_pipeline_empty(simple_config):
-    assert simple_config['pipeline'] == []
-
-
-@pytest.fixture
-def more_complex_config(config_stream):
-    pipeline = CompVizPipeline.load(config_stream)
-    output_stream = StringIO()
-    pipeline.save(output_stream)
-    output_stream.seek(0)
-    return yaml.safe_load(output_stream.read())
-
-
-def test_pipeline_save_pipeline_nb_of_stages(more_complex_config):
-    assert len(more_complex_config['pipeline']) == 2
-
-
-def test_pipeline_save_pipeline_stages_type(more_complex_config):
-    assert all(isinstance(stage, dict) for stage in more_complex_config['pipeline'])
-
-
-def test_pipeline_save_pipeline_names(more_complex_config):
-    names = [stage_config['name'] for stage_config in more_complex_config['pipeline']]
-    assert names == ['op1', 'op2']
-
-
-def test_pipeline_save_gets_ops_configs(config_stream):
-    pipeline = CompVizPipeline.load(config_stream)
-    with patch('ezcv.operator.get_operator_config') as mock:
-        mock.return_value = 'some_value'
-        pipeline.save(StringIO())
-        call_args = [cal[0] for cal in mock.call_args_list]
-        assert (pipeline.operators['op1'],) in call_args
-        assert (pipeline.operators['op2'],) in call_args
-
-
-def test_pipeline_save_op_config_exists(more_complex_config):
-    assert all('config' in stage_config for stage_config in more_complex_config['pipeline'])
-
-
-def test_pipeline_save_op_config_return_from_get_operator_config(config_stream):
-    pipeline = CompVizPipeline.load(config_stream)
-    unique_value = 'unique_value'
-    with patch('ezcv.operator.get_operator_config') as mock:
-        mock.return_value = unique_value
-        output_stream = StringIO()
-        pipeline.save(output_stream)
-        output_stream.seek(0)
-        config = yaml.safe_load(output_stream)
-        assert config['pipeline'][0]['config'] == 'unique_value'
-        assert config['pipeline'][1]['config'] == 'unique_value'
 
 
 @pytest.fixture

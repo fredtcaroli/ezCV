@@ -1,4 +1,4 @@
-from typing import TextIO, Tuple, Dict, List, Optional
+from typing import TextIO, Tuple, Dict, List, Optional, Any
 
 import yaml
 
@@ -48,23 +48,13 @@ class CompVizPipeline(object):
 
     @staticmethod
     def load(stream: TextIO) -> "CompVizPipeline":
+        from ezcv.config import create_pipeline
         pipeline_config = yaml.safe_load(stream)
-        runner = CompVizPipeline()
-        for op_config in pipeline_config['pipeline']:
-            operator = op_lib.create_operator(op_config['config'])
-            runner.add_operator(op_config['name'], operator)
-        return runner
+        return create_pipeline(pipeline_config)
 
     def save(self, stream: TextIO):
-        config = dict()
-        config['version'] = '0.0'
-        pipeline_config = list()
-        for operator_name, operator in self.operators.items():
-            stage_config = dict()
-            stage_config['name'] = operator_name
-            stage_config['config'] = op_lib.get_operator_config(operator)
-            pipeline_config.append(stage_config)
-        config['pipeline'] = pipeline_config
+        from ezcv.config import get_pipeline_config
+        config = get_pipeline_config(self)
         yaml.safe_dump(config, stream, sort_keys=False)
 
 
