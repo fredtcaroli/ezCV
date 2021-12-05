@@ -121,6 +121,26 @@ class TestAddOperator:
         assert_terms_in_exception(e, ['duplicated'])
 
 
+class TestRemoveOperator:
+    @pytest.mark.parametrize('idx', ['op_to_delete', 1])
+    def test_happy_path(self, idx):
+        operator_to_delete = 'op_to_delete'
+        operator_to_stay = 'op_to_stay'
+        pipeline = CompVizPipeline()
+        pipeline.add_operator(operator_to_stay, TestOperator())
+        pipeline.add_operator(operator_to_delete, TestOperator())
+        pipeline.remove_operator(idx)
+        assert list(pipeline.operators.keys()) == [operator_to_stay]
+
+    @pytest.mark.parametrize('idx', ['nonexistent_name', -1, 10])
+    def test_invalid_idx(self, idx):
+        pipeline = CompVizPipeline()
+        pipeline.add_operator('test_op', TestOperator())
+        with pytest.raises(ValueError) as e:
+            pipeline.remove_operator(idx)
+        assert_terms_in_exception(e, ['invalid', 'operator'])
+
+
 class TestRun:
     @parametrize_img
     @pytest.mark.parametrize('pipeline', [CompVizPipeline(), CompVizPipeline.load(get_config_stream())])

@@ -1,4 +1,4 @@
-from typing import TextIO, Tuple, Dict, List, Optional, Any
+from typing import TextIO, Tuple, Dict, List, Optional, Union
 
 import yaml
 
@@ -42,9 +42,36 @@ class CompVizPipeline(object):
         self._operators_order[self._operators_order.index(name)] = new_name
         self._operators[new_name] = self._operators.pop(name)
 
+    def remove_operator(self, name_or_index: Union[int, str]):
+        if isinstance(name_or_index, int):
+            self._raise_if_index_is_invalid(name_or_index)
+            name = self._operators_order[name_or_index]
+            index = name_or_index
+        else:
+            self._raise_if_name_doesnt_exist(name_or_index)
+            name = name_or_index
+            index = self._operators_order.index(name)
+
+        del self._operators[name]
+        del self._operators_order[index]
+
     def _raise_if_name_is_unavailable(self, name: str):
         if name in self._operators:
             raise ValueError('Trying to add a duplicated name: %s' % name)
+
+    def _get_operator_name(self, index: int) -> str:
+        return self._operators_order[index]
+
+    def _raise_if_name_doesnt_exist(self, name: str):
+        if name not in self._operators:
+            raise ValueError(
+                f'Trying to select an invalid operator name: "{name}" (from operators {self._operators_order})'
+            )
+
+    def _raise_if_index_is_invalid(self, index: int):
+        nb_operators = len(self._operators)
+        if index < 0 or index >= nb_operators:
+            raise ValueError(f'Trying to select an invalid operator index: {index} (from {nb_operators} operators)')
 
     @staticmethod
     def load(stream: TextIO) -> "CompVizPipeline":
