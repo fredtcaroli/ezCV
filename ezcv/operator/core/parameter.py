@@ -20,7 +20,7 @@ class ParameterSpec(Generic[T]):
 
 
 class IntegerParameter(ParameterSpec[int]):
-    def __init__(self, default_value: int, lower: int, upper: int):
+    def __init__(self, default_value: int, lower: int, upper: int, step_size: int = 1):
         if not isinstance(default_value, int):
             raise ValueError('Invalid default_value: %s' % str(default_value))
         super().__init__(default_value)
@@ -28,10 +28,13 @@ class IntegerParameter(ParameterSpec[int]):
             raise ValueError('Invalid integer lower limit: %s' % str(lower))
         if not isinstance(upper, int):
             raise ValueError('Invalid integer upper limit: %s' % str(upper))
+        if not isinstance(step_size, int) or step_size <= 0:
+            raise ValueError('Invalid integer step_size: %s' % str(step_size))
         if lower >= upper:
             raise ValueError('Invalid lower and upper limits: (%d, %d)' % (lower, upper))
         self.lower = lower
         self.upper = upper
+        self.step_size = step_size
 
     def from_config(self, config: Any) -> int:
         assert isinstance(config, int)
@@ -43,7 +46,7 @@ class IntegerParameter(ParameterSpec[int]):
 
 
 class DoubleParameter(ParameterSpec[float]):
-    def __init__(self, default_value: float, lower: float, upper: float):
+    def __init__(self, default_value: float, lower: float, upper: float, step_size: float = 0.1):
         if not isinstance(default_value, (float, int)):
             raise ValueError('Invalid default_value: %s' % str(default_value))
         super().__init__(default_value)
@@ -51,10 +54,13 @@ class DoubleParameter(ParameterSpec[float]):
             raise ValueError('Invalid number lower limit: %s' % str(lower))
         if not isinstance(upper, (float, int)):
             raise ValueError('Invalid number upper limit: %s' % str(upper))
+        if not isinstance(step_size, (float, int)) or step_size <= 0:
+            raise ValueError('Invalid integer step_size: %s' % str(step_size))
         if lower >= upper:
             raise ValueError('Invalid lower and upper limits: (%d, %d)' % (lower, upper))
         self.lower = lower
         self.upper = upper
+        self.step_size = step_size
 
     def from_config(self, config: Any) -> float:
         assert isinstance(config, (float, int))
