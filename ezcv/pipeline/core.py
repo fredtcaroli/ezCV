@@ -22,6 +22,8 @@ class CompVizPipeline(object):
         last = img
         ctx = PipelineContext(img)
         for name, operator in self.operators.items():
+            if operator.only_gray and last.ndim > 2:
+                raise OperatorFailedError(f'Operator {name} expects a gray image')
             with ctx.scope(name):
                 try:
                     last = operator.run(last, ctx)
@@ -58,9 +60,6 @@ class CompVizPipeline(object):
     def _raise_if_name_is_unavailable(self, name: str):
         if name in self._operators:
             raise ValueError('Trying to add a duplicated name: %s' % name)
-
-    def _get_operator_name(self, index: int) -> str:
-        return self._operators_order[index]
 
     def _raise_if_name_doesnt_exist(self, name: str):
         if name not in self._operators:

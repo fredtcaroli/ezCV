@@ -9,5 +9,8 @@ class Operator(object):
 
     Extend this class to implement new functionality
     """
+
+    only_gray: bool = False
+
     def run(self, img: Image, ctx: PipelineContext) -> Image:
         raise NotImplementedError()

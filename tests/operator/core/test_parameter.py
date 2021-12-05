@@ -110,7 +110,7 @@ def test_integer_parameter_valid_lower_upper_limits(limits):
     ('not a number', 5),
     (5, 'not a number')
 ])
-def test_integer_parameter_invalid_lower_higher_limits(limits):
+def test_integer_parameter_invalid_lower_upper_limits(limits):
     with pytest.raises(ValueError) as e:
         IntegerParameter(default_value=5, lower=limits[0], upper=limits[1])
     assert_terms_in_exception(e, ['invalid'])
@@ -145,6 +145,32 @@ def test_integer_parameter_invalid_default_value(default_value):
     with pytest.raises(ValueError) as e:
         IntegerParameter(default_value=default_value, lower=0, upper=10)
     assert_terms_in_exception(e, ['invalid', 'default'])
+
+
+@pytest.mark.parametrize('step_size', [
+    1,
+    10
+])
+def test_integer_parameter_valid_step_size(step_size):
+    IntegerParameter(default_value=1, lower=0, upper=10, step_size=step_size)
+
+
+@pytest.mark.parametrize('step_size', [
+    '',
+    'not-a-number',
+    None,
+    '2.5',
+    '10',
+    'ten',
+    tuple(),
+    list(),
+    -1,
+    0
+])
+def test_integer_parameter_invalid_step_size(step_size):
+    with pytest.raises(ValueError) as e:
+        IntegerParameter(default_value=1, lower=0, upper=10, step_size=step_size)
+    assert_terms_in_exception(e, ["invalid", "step"])
 
 
 @pytest.mark.parametrize('config', [
@@ -289,6 +315,32 @@ def test_double_parameter_invalid_default_value(value):
     with pytest.raises(ValueError) as e:
         DoubleParameter(default_value=value, lower=0, upper=5)
     assert_terms_in_exception(e, ['invalid', 'default'])
+
+
+@pytest.mark.parametrize('step_size', [
+    1,
+    10
+])
+def test_double_parameter_valid_step_size(step_size):
+    DoubleParameter(default_value=1, lower=0, upper=10, step_size=step_size)
+
+
+@pytest.mark.parametrize('step_size', [
+    '',
+    'not-a-number',
+    None,
+    '2.5',
+    '10',
+    'ten',
+    tuple(),
+    list(),
+    -1,
+    0
+])
+def test_double_parameter_invalid_step_size(step_size):
+    with pytest.raises(ValueError) as e:
+        DoubleParameter(default_value=1, lower=0, upper=10, step_size=step_size)
+    assert_terms_in_exception(e, ["invalid", "step"])
 
 
 def TestDefaultParameterHelper(value: Any):

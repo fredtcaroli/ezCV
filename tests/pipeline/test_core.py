@@ -198,6 +198,21 @@ class TestRun:
 
         assert_terms_in_exception(e, ['return', 'invalid'])
 
+    def test_only_gray_flag(self):
+        class TestOnlyGrayFlagOperator(Operator):
+            only_gray = True
+
+            def run(self, img: Image, ctx: PipelineContext) -> Image:
+                return img
+
+        pipeline = CompVizPipeline()
+        pipeline.add_operator('test_op', TestOnlyGrayFlagOperator())
+
+        with pytest.raises(OperatorFailedError) as e:
+            pipeline.run(build_img((16, 16), rgb=True))
+
+        assert_terms_in_exception(e, ["expect", "gray"])
+
 
 def test_pipeline_run_set_ctx_original_img():
     img_rgb = build_img((128, 128), rgb=True)
