@@ -92,10 +92,12 @@ The goal of this operator is to threshold a grayscale image, given a threshold v
 
 ```python
 import cv2
-from ezcv.operator import Operator, EnumParameter, IntegerParameter
+from ezcv.operator import register_operator, Operator, EnumParameter, IntegerParameter
 from ezcv.pipeline import PipelineContext
 from ezcv.typing import Image
 
+# The @register_operator makes sure your operator will be available for choosing in ezCV-GUI
+@register_operator
 class ThresholdOperator(Operator):
     """ Applies a Threshold operation
 
@@ -106,6 +108,8 @@ class ThresholdOperator(Operator):
     # This flag tells ezCV that this operator only accepts grayscale images
     only_gray = True
     
+    # You declare your parameters with Parameter classes, but you can use them like they
+    # are regular builtin types, like strings and integers
     threshold = IntegerParameter(default_value=127, lower=0, upper=255)
     method = EnumParameter(possible_values=["binary", "otsu"], default_value="binary")
 
@@ -143,24 +147,26 @@ pipeline:
 
 We have one more example to go. In this example we'll show how to:
 
-1. Setup a custom type of parameters;
+1. Set up a custom type of parameter;
 2. Add information to the pipeline context.
 
 For this example we'll use a fictional, somewhat useless, operator.
 
-This operator is going to use a coordinates parameter `coord`, which is tuple of 2 value, x and y.
-We could setup two parameters, one for each coordinate value, but we're going to setup a
-custom parameter type.
+This operator is going to use a coordinates parameter `coord`, which is tuple of 2 value, x and y. 
+This parameter will be saved to the final config file as an object with `x` and `y` properties.
+A 2-tuple is perfectly serializable the way it is, but we're doing this to show that you have full control
+of how parameters are saved, and that you can save complex parameter types if you just provide a yaml-serializable
+object for it.
 
-Given a coordinate, the operator is going to register in pipeline context what was the color of the pixel
+Given a coordinate `coord`, the operator is going to register in the pipeline context what was the color of the pixel
 on that coordinate. We'll later show how to read that value outside the pipeline.
 
-So here's the operator implementations:
+So here's the operator implementation:
 
 ```python
 from typing import Tuple, Dict
 
-from ezcv.operator import Operator, ParameterSpec
+from ezcv.operator import register_operator, Operator, ParameterSpec
 from ezcv.pipeline import PipelineContext
 from ezcv.typing import Image
 
@@ -175,6 +181,7 @@ class CoordinateParameter(ParameterSpec[Tuple[int, int]]):
         return config['x'], config['y']
         
 
+@register_operator
 class ColorPicker(Operator):
     coord = CoordinateParameter(default_value=(0, 0))
 
@@ -194,8 +201,7 @@ advanced IDE or using mypy.
 to decode it.
 * Our color picker operator adds the color information to the pipeline context. 
 
-So without further ado, let's show how you can use this piece. First let's build the
-CV pipeline.
+This is how a config that uses our operator looks like:
 
 ```yaml
 # color_picker.yml
@@ -237,4 +243,7 @@ with open('color_picker.yml', 'w') as f:
     pipeline.save(f)  # saves updated parameter
 ```
 
-And there you have it :)
+And there you have it! There's still some tinkering with pyQt6 if you want a nice graphical interface for
+picking the `coord` parameter. There isn't a tutorial on that yet, but you can read how the 
+`BooleanParameterWidget` is implemented [here](https://github.com/fredtcaroli/ezCV-GUI/blob/c8c1e39ce7ff61b497878d42f0b3c3f5007c08f8/ezcv_gui/widgets/parameter.py#L251-L264),
+and see that it's not so complicated.

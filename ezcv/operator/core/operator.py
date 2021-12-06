@@ -1,5 +1,3 @@
-import numpy as np
-
 from ezcv.pipeline import PipelineContext
 from ezcv.typing import Image
 
