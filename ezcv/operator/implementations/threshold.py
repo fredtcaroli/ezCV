@@ -5,23 +5,20 @@ from ezcv.pipeline import PipelineContext
 from ezcv.typing import Image
 
 
-threshold_types = [
-    'THRESH_BINARY',
-    'THRESH_BINARY_INV',
-    'THRESH_TRUNC',
-    'THRESH_TOZERO',
-    'THRESH_TOZERO_INV'
-]
-
-
 @register_operator
 class SimpleThreshold(Operator):
 
     only_gray = True
 
     threshold_type = EnumParameter(
-        possible_values=threshold_types,
-        default_value=threshold_types[0]
+        possible_values=[
+            'THRESH_BINARY',
+            'THRESH_BINARY_INV',
+            'THRESH_TRUNC',
+            'THRESH_TOZERO',
+            'THRESH_TOZERO_INV'
+        ],
+        default_value='THRESH_BINARY'
     )
     otsu = BooleanParameter(default_value=False)
     threshold_value = IntegerParameter(default_value=127, lower=0, upper=255)
@@ -41,8 +38,11 @@ class AdaptiveThreshold(Operator):
     only_gray = True
 
     threshold_type = EnumParameter(
-        possible_values=threshold_types,
-        default_value=threshold_types[0]
+        possible_values=[
+            'THRESH_BINARY',
+            'THRESH_BINARY_INV'
+        ],
+        default_value='THRESH_BINARY'
     )
     adaptive_method = EnumParameter(
         possible_values=[
