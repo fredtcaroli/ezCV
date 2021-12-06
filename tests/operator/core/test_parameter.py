@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from ezcv.operator import ParameterSpec, IntegerParameter, DoubleParameter, EnumParameter
+from ezcv.operator import ParameterSpec, IntegerParameter, DoubleParameter, EnumParameter, BooleanParameter
 from ezcv.test_utils import assert_terms_in_exception
 
 
@@ -450,3 +450,30 @@ def test_enum_exposes_possible_values():
     possible_values = ['1', '2', '3']
     param = EnumParameter(possible_values=possible_values, default_value='1')
     assert param.possible_values == possible_values
+
+
+@pytest.mark.parametrize('value', [True, False])
+def test_boolean_valid_values(value):
+    param = BooleanParameter(default_value=value)
+    param.to_config(value)
+    param.from_config(value)
+
+
+@pytest.mark.parametrize('value', [
+    1,
+    '1',
+    object(),
+    object,
+    None
+])
+def test_boolean_invalid_values(value):
+    with pytest.raises(ValueError) as e:
+        BooleanParameter(default_value=value)
+    assert_terms_in_exception(e, ['invalid', 'default', 'value'])
+
+    param = BooleanParameter(True)
+    with pytest.raises(AssertionError) as e:
+        param.from_config(value)
+
+    with pytest.raises(AssertionError) as e:
+        param.to_config(value)

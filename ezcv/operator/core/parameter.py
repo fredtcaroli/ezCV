@@ -87,3 +87,17 @@ class EnumParameter(ParameterSpec[str]):
         assert isinstance(value, str) and value in self.possible_values
         return value
 
+
+class BooleanParameter(ParameterSpec[bool]):
+    def __init__(self, default_value: bool):
+        if not isinstance(default_value, bool):
+            raise ValueError(f'Invalid default value: {default_value}')
+        super().__init__(default_value)
+
+    def from_config(self, config: Any) -> bool:
+        assert isinstance(config, bool)
+        return config
+
+    def to_config(self, value: bool) -> Any:
+        assert isinstance(value, bool)
+        return value
