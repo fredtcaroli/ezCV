@@ -37,13 +37,6 @@ class CompVizPipeline(object):
         self._operators[name] = operator
         self._operators_order.append(name)
 
-    def rename_operator(self, name: str, new_name: str):
-        if name not in self._operators:
-            raise ValueError(f'Unexistent operator name: "{name}"')
-        self._raise_if_name_is_unavailable(new_name)
-        self._operators_order[self._operators_order.index(name)] = new_name
-        self._operators[new_name] = self._operators.pop(name)
-
     def remove_operator(self, name_or_index: Union[int, str]):
         if isinstance(name_or_index, int):
             self._raise_if_index_is_invalid(name_or_index)
@@ -56,6 +49,24 @@ class CompVizPipeline(object):
 
         del self._operators[name]
         del self._operators_order[index]
+
+    def rename_operator(self, name: str, new_name: str):
+        if name not in self._operators:
+            raise ValueError(f'Unexistent operator name: "{name}"')
+        self._raise_if_name_is_unavailable(new_name)
+        self._operators_order[self._operators_order.index(name)] = new_name
+        self._operators[new_name] = self._operators.pop(name)
+
+    @staticmethod
+    def load(stream: TextIO) -> "CompVizPipeline":
+        from ezcv.config import create_pipeline
+        pipeline_config = yaml.safe_load(stream)
+        return create_pipeline(pipeline_config)
+
+    def save(self, stream: TextIO):
+        from ezcv.config import get_pipeline_config
+        config = get_pipeline_config(self)
+        yaml.safe_dump(config, stream, sort_keys=False)
 
     def _raise_if_name_is_unavailable(self, name: str):
         if name in self._operators:
@@ -71,17 +82,6 @@ class CompVizPipeline(object):
         nb_operators = len(self._operators)
         if index < 0 or index >= nb_operators:
             raise ValueError(f'Trying to select an invalid operator index: {index} (from {nb_operators} operators)')
-
-    @staticmethod
-    def load(stream: TextIO) -> "CompVizPipeline":
-        from ezcv.config import create_pipeline
-        pipeline_config = yaml.safe_load(stream)
-        return create_pipeline(pipeline_config)
-
-    def save(self, stream: TextIO):
-        from ezcv.config import get_pipeline_config
-        config = get_pipeline_config(self)
-        yaml.safe_dump(config, stream, sort_keys=False)
 
 
 def _raise_if_invalid_img(img: Image, returned_from: Optional[str] = None):
