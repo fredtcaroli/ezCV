@@ -1,6 +1,6 @@
 import cv2
 
-from ezcv.operator import register_operator, Operator, EnumParameter, IntegerParameter
+from ezcv.operator import register_operator, Operator, EnumParameter, IntegerParameter, BooleanParameter
 from ezcv.pipeline import PipelineContext
 from ezcv.typing import Image
 
@@ -23,11 +23,14 @@ class SimpleThreshold(Operator):
         possible_values=threshold_types,
         default_value=threshold_types[0]
     )
+    otsu = BooleanParameter(default_value=False)
     threshold_value = IntegerParameter(default_value=127, lower=0, upper=255)
     max_value = IntegerParameter(default_value=255, lower=0, upper=255)
 
     def run(self, img: Image, ctx: PipelineContext) -> Image:
         type_flag = getattr(cv2, self.threshold_type)
+        if self.otsu:
+            type_flag += cv2.THRESH_OTSU
         _, thresh = cv2.threshold(img, self.threshold_value, self.max_value, type_flag)
         return thresh
 
