@@ -42,11 +42,10 @@ class CompVizPipeline(object):
         del self._operators_order[index]
         del self._operators[name]
 
-    def rename_operator(self, name: str, new_name: str):
-        if name not in self._operators:
-            raise ValueError(f'Unexistent operator name: "{name}"')
+    def rename_operator(self, name_or_index: Union[int, str], new_name: str):
+        index, name = self._identify_operator(name_or_index)
         self._raise_if_name_is_unavailable(new_name)
-        self._operators_order[self._operators_order.index(name)] = new_name
+        self._operators_order[index] = new_name
         self._operators[new_name] = self._operators.pop(name)
 
     def move_operator(self, name_or_index: Union[int, str], target: int):
