@@ -55,6 +55,10 @@ class CompVizPipeline(object):
             raise ValueError(f'Invalid move target: {target}')
         self._operators_order.insert(target, self._operators_order.pop(index))
 
+    def get_operator_name(self, index: int) -> str:
+        index, name = self._identify_operator(index)
+        return name
+
     @staticmethod
     def load(stream: TextIO) -> "CompVizPipeline":
         from ezcv.config import create_pipeline

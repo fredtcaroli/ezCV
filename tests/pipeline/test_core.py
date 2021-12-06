@@ -176,6 +176,23 @@ class TestMoveOperator:
         assert_terms_in_exception(e, ['invalid', 'target'])
 
 
+class TestGetOperatorName:
+    def test_happy_path(self):
+        expected_name = 'op1'
+        pipeline = CompVizPipeline()
+        pipeline.add_operator('op0', TestOperator())
+        pipeline.add_operator(expected_name, TestOperator())
+        assert pipeline.get_operator_name(1) == expected_name
+
+    @pytest.mark.parametrize('idx', [-1, 10])
+    def test_invalid_index(self, idx):
+        pipeline = CompVizPipeline()
+        pipeline.add_operator('op0', TestOperator())
+        pipeline.add_operator('op1', TestOperator())
+        with pytest.raises(ValueError) as e:
+            pipeline.get_operator_name(idx)
+        assert_terms_in_exception(e, ['invalid', 'index'])
+
 
 class TestRun:
     @parametrize_img
