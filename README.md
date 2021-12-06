@@ -17,13 +17,19 @@ conda activate my_env
 conda install opencv
 ```
 
-you can then download the source code and run
+You'll also need poetry installed:
 
 ```bash
-python setup.py install
+pip install poetry
 ```
 
-We'll probably provide an easier way to install this later. Probably using conda.
+You can then download the source code and run
+
+```bash
+poetry install
+```
+
+We'll probably provide an easier way to install this later.
 
 ### Documentation
 
@@ -97,6 +103,9 @@ class ThresholdOperator(Operator):
         - threshold: Threshold value
         - method: Thresholding method to use
     """
+    # This flag tells ezCV that this operator only accepts grayscale images
+    only_gray = True
+    
     threshold = IntegerParameter(default_value=127, lower=0, upper=255)
     method = EnumParameter(possible_values=["binary", "otsu"], default_value="binary")
 
