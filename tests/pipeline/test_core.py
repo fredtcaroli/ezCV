@@ -141,6 +141,42 @@ class TestRemoveOperator:
         assert_terms_in_exception(e, ['invalid', 'operator'])
 
 
+class TestMoveOperator:
+    @pytest.mark.parametrize('idx', ['op1', 1])
+    def test_happy_path(self, idx):
+        op_to_move_name = 'op1'
+        op_to_move = TestOperator()
+        target = 2
+
+        pipeline = CompVizPipeline()
+        pipeline.add_operator('op0', TestOperator())
+        pipeline.add_operator(op_to_move_name, op_to_move)
+        pipeline.add_operator('op2', TestOperator())
+        pipeline.move_operator(idx, target)
+
+        assert list(pipeline.operators.values())[target] == op_to_move
+        assert list(pipeline.operators.keys())[target] == op_to_move_name
+
+    @pytest.mark.parametrize('idx', ['unexistent_op', 10])
+    def test_invalid_idx(self, idx):
+        pipeline = CompVizPipeline()
+        pipeline.add_operator('op0', TestOperator())
+        pipeline.add_operator('op1', TestOperator())
+        with pytest.raises(ValueError) as e:
+            pipeline.move_operator(idx, 0)
+        assert_terms_in_exception(e, ['invalid', 'operator'])
+
+    @pytest.mark.parametrize('target', ['string', 10, -1])
+    def test_invalid_target(self, target):
+        pipeline = CompVizPipeline()
+        pipeline.add_operator('op0', TestOperator())
+        pipeline.add_operator('op1', TestOperator())
+        with pytest.raises(ValueError) as e:
+            pipeline.move_operator('op0', target)
+        assert_terms_in_exception(e, ['invalid', 'target'])
+
+
+
 class TestRun:
     @parametrize_img
     @pytest.mark.parametrize('pipeline', [CompVizPipeline(), CompVizPipeline.load(get_config_stream())])

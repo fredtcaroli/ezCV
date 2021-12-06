@@ -38,17 +38,9 @@ class CompVizPipeline(object):
         self._operators_order.append(name)
 
     def remove_operator(self, name_or_index: Union[int, str]):
-        if isinstance(name_or_index, int):
-            self._raise_if_index_is_invalid(name_or_index)
-            name = self._operators_order[name_or_index]
-            index = name_or_index
-        else:
-            self._raise_if_name_doesnt_exist(name_or_index)
-            name = name_or_index
-            index = self._operators_order.index(name)
-
-        del self._operators[name]
+        index, name = self._identify_operator(name_or_index)
         del self._operators_order[index]
+        del self._operators[name]
 
     def rename_operator(self, name: str, new_name: str):
         if name not in self._operators:
@@ -56,6 +48,12 @@ class CompVizPipeline(object):
         self._raise_if_name_is_unavailable(new_name)
         self._operators_order[self._operators_order.index(name)] = new_name
         self._operators[new_name] = self._operators.pop(name)
+
+    def move_operator(self, name_or_index: Union[int, str], target: int):
+        index, name = self._identify_operator(name_or_index)
+        if not isinstance(target, int) or target < 0 or target >= len(self._operators_order):
+            raise ValueError(f'Invalid move target: {target}')
+        self._operators_order.insert(target, self._operators_order.pop(index))
 
     @staticmethod
     def load(stream: TextIO) -> "CompVizPipeline":
@@ -67,6 +65,20 @@ class CompVizPipeline(object):
         from ezcv.config import get_pipeline_config
         config = get_pipeline_config(self)
         yaml.safe_dump(config, stream, sort_keys=False)
+
+    def _identify_operator(self, name_or_index: Union[int, str]) -> Tuple[int, str]:
+        """ Returns both the index and name of an operator, given either its index or its name """
+        if isinstance(name_or_index, int):  # it's an index
+            self._raise_if_index_is_invalid(name_or_index)
+            index = name_or_index
+            name = self._operators_order[name_or_index]
+        elif isinstance(name_or_index, str):  # it's a name
+            self._raise_if_name_doesnt_exist(name_or_index)
+            index = self._operators_order.index(name_or_index)
+            name = name_or_index
+        else:
+            raise ValueError(f'Operator identifier should be either a string or an integer. Got "{name_or_index}"')
+        return index, name
 
     def _raise_if_name_is_unavailable(self, name: str):
         if name in self._operators:
