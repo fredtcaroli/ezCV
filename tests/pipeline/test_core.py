@@ -495,6 +495,13 @@ class TestRenameOperator:
         operators_order = [op_config['name'] for op_config in config['pipeline']]
         assert operators_order == ['op1', 'renamed', 'op3']
 
+    def test_rename_to_same_name_ok(self):
+        op_name = 'some_op_name'
+        pipeline = CompVizPipeline()
+        pipeline.add_operator(op_name, TestOperator())
+        pipeline.rename_operator(op_name, op_name)
+        assert list(pipeline.operators.keys()) == [op_name]
+
 
 def test_operator_fail():
     class FailingOperator(Operator):

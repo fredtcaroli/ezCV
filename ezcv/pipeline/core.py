@@ -44,6 +44,8 @@ class CompVizPipeline(object):
 
     def rename_operator(self, name_or_index: Union[int, str], new_name: str):
         index, name = self._identify_operator(name_or_index)
+        if name == new_name:
+            return
         self._raise_if_name_is_unavailable(new_name)
         self._operators_order[index] = new_name
         self._operators[new_name] = self._operators.pop(name)
