@@ -11,7 +11,7 @@ This is the backend library for ezCV-GUI, a GUI for building CV pipelines.
 
 You'll need OpenCV installed with python bindings. We recommend using conda:
 
-```bash
+```
 conda create -n my_env
 conda activate my_env
 conda install opencv
@@ -19,13 +19,13 @@ conda install opencv
 
 You'll also need poetry installed:
 
-```bash
+```
 pip install poetry
 ```
 
 You can then download the source code and run
 
-```bash
+```
 poetry install
 ```
 
