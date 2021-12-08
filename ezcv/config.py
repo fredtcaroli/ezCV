@@ -64,11 +64,12 @@ def _perform_validation(config: Config, schema: ConfigSchema):
 def create_pipeline(pipeline_config: Config, validate: Optional[bool] = True) -> CompVizPipeline:
     if validate:
         _perform_validation(pipeline_config, pipeline_schema)
-    runner = CompVizPipeline()
+
+    pipeline = CompVizPipeline()
     for op_config in pipeline_config['pipeline']:
         operator = create_operator(op_config['config'], validate=False)
-        runner.add_operator(op_config['name'], operator)
-    return runner
+        pipeline.add_operator(op_config['name'], operator)
+    return pipeline
 
 
 def create_operator(operator_config: Config, validate: Optional[bool] = True) -> Operator:
