@@ -1,11 +1,10 @@
-import inspect
-from typing import Dict, Type, Optional
+from typing import Dict, Optional
 
 from cerberus import Validator
 
 from ezcv import CompVizPipeline
 from ezcv.classpath import class_from_fully_qualified_name, fully_qualified_name
-from ezcv.operator import Operator, ParameterSpec
+from ezcv.operator import Operator
 
 
 ConfigSchema = Dict
@@ -85,7 +84,7 @@ def create_operator(operator_config: Config, validate: Optional[bool] = True) ->
     if not issubclass(cls, Operator):
         raise ConfigParsingError(f"{fqn} is not an Operator")
 
-    parameters = get_parameters_specs(cls)
+    parameters = cls.get_parameters_specs()
 
     op = cls()
     for name, param_config in operator_config['params'].items():
@@ -98,10 +97,6 @@ def create_operator(operator_config: Config, validate: Optional[bool] = True) ->
         setattr(op, name, parsed_value)
 
     return op
-
-
-def get_parameters_specs(op_cls: Type[Operator]) -> Dict[str, ParameterSpec]:
-    return {name: value for name, value in op_cls.__dict__.items() if isinstance(value, ParameterSpec)}
 
 
 def get_pipeline_config(pipeline: CompVizPipeline) -> Config:
@@ -121,11 +116,11 @@ def get_operator_config(operator: Operator) -> Config:
     config = dict()
     config['implementation'] = fully_qualified_name(type(operator))
 
-    params_objs = get_parameters_specs(type(operator))
+    params_specs = operator.get_parameters_specs()
     params = dict()
-    for name, param_obj in params_objs.items():
+    for name, param_spec in params_specs.items():
         value = getattr(operator, name)
-        value_config = param_obj.to_config(value)
+        value_config = param_spec.to_config(value)
         params[name] = value_config
     config['params'] = params
 

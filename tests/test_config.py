@@ -172,35 +172,6 @@ def test_nested_param_config():
     assert actual_operator.some_param == (3, 4)
 
 
-class TestGetParametersSpecs:
-    def test_happy_path(self):
-        params = get_parameters_specs(OperatorForTesting)
-        assert len(params) == 2
-        assert 'param1' in params and params['param1'] is OperatorForTesting.param1
-        assert 'param2' in params and params['param2'] is OperatorForTesting.param2
-
-    def test_no_params(self):
-        class NoParamsOperator(Operator):
-            def run(self, img: Image, ctx: PipelineContext) -> Image:
-                pass
-
-        params = get_parameters_specs(NoParamsOperator)
-        assert len(params) == 0
-
-    def test_parameters_order(self):
-        class OperatorForTestingParamsOrder(Operator):
-            foo = IntegerParameter(default_value=0, lower=0, upper=1)
-            bar = IntegerParameter(default_value=0, lower=0, upper=1)
-            baz = IntegerParameter(default_value=0, lower=0, upper=1)
-            something = IntegerParameter(default_value=0, lower=0, upper=1)
-
-            def run(self, img: Image, ctx: PipelineContext) -> Image:
-                raise NotImplementedError()
-
-        params = get_parameters_specs(OperatorForTestingParamsOrder)
-        assert list(params.keys()) == ['foo', 'bar', 'baz', 'something']
-
-
 @pytest.fixture
 def pipeline_config(operator_config: Config) -> Config:
     config = {

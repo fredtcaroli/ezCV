@@ -1,2 +1,2 @@
-from .operator import Operator
 from .parameter import *
+from .operator import Operator
