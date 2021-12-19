@@ -101,7 +101,7 @@ def create_operator(operator_config: Config, validate: Optional[bool] = True) ->
 
 
 def get_parameters_specs(op_cls: Type[Operator]) -> Dict[str, ParameterSpec]:
-    return {name: value for name, value in inspect.getmembers(op_cls) if isinstance(value, ParameterSpec)}
+    return {name: value for name, value in op_cls.__dict__.items() if isinstance(value, ParameterSpec)}
 
 
 def get_pipeline_config(pipeline: CompVizPipeline) -> Config:

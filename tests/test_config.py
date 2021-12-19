@@ -173,7 +173,7 @@ def test_nested_param_config():
 
 
 class TestGetParametersSpecs:
-    def test_golden(self):
+    def test_happy_path(self):
         params = get_parameters_specs(OperatorForTesting)
         assert len(params) == 2
         assert 'param1' in params and params['param1'] is OperatorForTesting.param1
@@ -186,6 +186,19 @@ class TestGetParametersSpecs:
 
         params = get_parameters_specs(NoParamsOperator)
         assert len(params) == 0
+
+    def test_parameters_order(self):
+        class OperatorForTestingParamsOrder(Operator):
+            foo = IntegerParameter(default_value=0, lower=0, upper=1)
+            bar = IntegerParameter(default_value=0, lower=0, upper=1)
+            baz = IntegerParameter(default_value=0, lower=0, upper=1)
+            something = IntegerParameter(default_value=0, lower=0, upper=1)
+
+            def run(self, img: Image, ctx: PipelineContext) -> Image:
+                raise NotImplementedError()
+
+        params = get_parameters_specs(OperatorForTestingParamsOrder)
+        assert list(params.keys()) == ['foo', 'bar', 'baz', 'something']
 
 
 @pytest.fixture
