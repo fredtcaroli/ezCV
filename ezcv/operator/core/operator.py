@@ -1,18 +1,16 @@
 from typing import Type, Dict
 
 from .parameter import ParameterSpec
+from .settings import OperatorSettingsMixin
 from ezcv.pipeline import PipelineContext
 from ezcv.typing import Image
 
 
-class Operator(object):
+class Operator(OperatorSettingsMixin):
     """ Class representing an image operator
 
     Extend this class to implement new functionality
     """
-
-    only_gray: bool = False
-
     def run(self, img: Image, ctx: PipelineContext) -> Image:
         raise NotImplementedError()
 

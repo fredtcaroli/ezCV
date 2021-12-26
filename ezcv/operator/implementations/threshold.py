@@ -1,15 +1,13 @@
 import cv2
 
-from ezcv.operator import register_operator, Operator, EnumParameter, IntegerParameter, BooleanParameter
+from ezcv.operator import register_operator, Operator, EnumParameter, IntegerParameter, BooleanParameter, settings
 from ezcv.pipeline import PipelineContext
 from ezcv.typing import Image
 
 
 @register_operator
+@settings.GRAY_ONLY(True)
 class SimpleThreshold(Operator):
-
-    only_gray = True
-
     threshold_type = EnumParameter(
         possible_values=[
             'THRESH_BINARY',
@@ -33,10 +31,8 @@ class SimpleThreshold(Operator):
 
 
 @register_operator
+@settings.GRAY_ONLY(True)
 class AdaptiveThreshold(Operator):
-
-    only_gray = True
-
     threshold_type = EnumParameter(
         possible_values=[
             'THRESH_BINARY',

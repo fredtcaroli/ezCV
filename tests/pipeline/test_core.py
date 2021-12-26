@@ -1,4 +1,3 @@
-import re
 from io import StringIO
 from typing import Any
 from unittest.mock import patch, Mock
@@ -9,6 +8,7 @@ import yaml
 
 from ezcv import CompVizPipeline
 from ezcv.operator import Operator, IntegerParameter, DoubleParameter
+from ezcv.operator.core import settings
 from ezcv.pipeline.context import PipelineContext
 from ezcv.pipeline.core import OperatorFailedError, BadImageError
 from ezcv.test_utils import build_img, parametrize_img, assert_terms_in_exception
@@ -251,10 +251,9 @@ class TestRun:
 
         assert_terms_in_exception(e, ['return', 'invalid'])
 
-    def test_only_gray_flag(self):
+    def test_gray_only_flag(self):
+        @settings.GRAY_ONLY(True)
         class TestOnlyGrayFlagOperator(Operator):
-            only_gray = True
-
             def run(self, img: Image, ctx: PipelineContext) -> Image:
                 return img
 

@@ -92,12 +92,14 @@ The goal of this operator is to threshold a grayscale image, given a threshold v
 
 ```python
 import cv2
-from ezcv.operator import register_operator, Operator, EnumParameter, IntegerParameter
+from ezcv.operator import register_operator, Operator, EnumParameter, IntegerParameter, settings
 from ezcv.pipeline import PipelineContext
 from ezcv.typing import Image
 
 # The @register_operator makes sure your operator will be available for choosing in ezCV-GUI
 @register_operator
+# This flag tells ezCV that this operator only accepts grayscale images
+@settings.GRAY_ONLY(True)
 class ThresholdOperator(Operator):
     """ Applies a Threshold operation
 
@@ -105,9 +107,6 @@ class ThresholdOperator(Operator):
         - threshold: Threshold value
         - method: Thresholding method to use
     """
-    # This flag tells ezCV that this operator only accepts grayscale images
-    only_gray = True
-    
     # You declare your parameters with Parameter classes, but you can use them like they
     # are regular builtin types, like strings and integers
     threshold = IntegerParameter(default_value=127, lower=0, upper=255)

@@ -5,6 +5,7 @@ import yaml
 import ezcv.operator as op_lib
 from ezcv import utils
 from ezcv.pipeline.context import PipelineContext
+from ezcv.operator.core import settings
 from ezcv.typing import Image
 
 
@@ -22,7 +23,7 @@ class CompVizPipeline(object):
         last = img
         ctx = PipelineContext(img)
         for name, operator in self.operators.items():
-            if operator.only_gray and last.ndim > 2:
+            if operator.get(settings.GRAY_ONLY) is True and last.ndim > 2:
                 raise OperatorFailedError(f'Operator {name} expects a gray image')
             with ctx.scope(name):
                 try:
