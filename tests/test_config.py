@@ -2,8 +2,9 @@ from typing import Any, Tuple
 
 import pytest
 
-from ezcv.config import create_operator, get_operator_config, ConfigParsingError, create_pipeline, \
+from ezcv.config import create_operator, get_operator_config, create_pipeline, \
     Config, get_pipeline_config
+from ezcv.exceptions import ConfigParsingError
 from ezcv.operator.operator import Operator
 from ezcv.operator.parameter import IntegerParameter, DoubleParameter, ParameterSpec
 from ezcv.pipeline import PipelineContext

@@ -4,3 +4,7 @@ class OperatorFailedError(Exception):
 
 class BadImageError(Exception):
     pass
+
+
+class ConfigParsingError(Exception):
+    pass

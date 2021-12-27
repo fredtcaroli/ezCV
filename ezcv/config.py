@@ -4,6 +4,7 @@ from cerberus import Validator
 
 from ezcv import CompVizPipeline
 from ezcv.classpath import class_from_fully_qualified_name, fully_qualified_name
+from ezcv.exceptions import ConfigParsingError
 from ezcv.operator import Operator
 
 
@@ -47,10 +48,6 @@ pipeline_schema: ConfigSchema = {
         }
     }
 }
-
-
-class ConfigParsingError(Exception):
-    pass
 
 
 def _perform_validation(config: Config, schema: ConfigSchema):
