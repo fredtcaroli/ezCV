@@ -1,6 +1,6 @@
 import pytest
 
-from ezcv.operator.core.settings import OperatorSettingsMixin, OperatorSetting
+from ezcv.operator.settings import OperatorSettingsMixin, OperatorSetting
 
 TEST_SETTING: OperatorSetting[int] = OperatorSetting('TEST_SETTING', 42)
 

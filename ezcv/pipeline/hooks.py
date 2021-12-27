@@ -1,6 +1,5 @@
 from ezcv.exceptions import OperatorFailedError
-from ezcv.operator import Operator
-from ezcv.operator.core import settings
+from ezcv.operator import Operator, settings
 from ezcv.pipeline import PipelineContext
 from ezcv.typing import Image
 

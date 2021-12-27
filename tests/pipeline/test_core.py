@@ -7,8 +7,7 @@ import pytest
 import yaml
 
 from ezcv import CompVizPipeline
-from ezcv.operator import Operator, IntegerParameter, DoubleParameter
-from ezcv.operator.core import settings
+from ezcv.operator import Operator, IntegerParameter, DoubleParameter, settings
 from ezcv.pipeline.context import PipelineContext
 from ezcv.exceptions import OperatorFailedError, BadImageError
 from ezcv.pipeline.hooks import PipelineHook
@@ -68,18 +67,46 @@ def config_stream():
     return get_config_stream()
 
 
+@pytest.fixture
+def pipeline(config_stream):
+    return CompVizPipeline.load(config_stream)
+
+
+class TestSave:
+    def test_pipeline_save_runs(self):
+        pipeline = CompVizPipeline()
+        pipeline.save(StringIO())
+
+    def test_pipeline_save_writes(self):
+        pipeline = CompVizPipeline()
+        output_stream = Mock()
+        output_stream.write = Mock()
+        pipeline.save(output_stream)
+        output_stream.write.assert_called()
+
+
 class TestLoad:
     def test_return_type(self, config_stream):
-        r = CompVizPipeline.load(config_stream)
-        assert isinstance(r, CompVizPipeline)
+        pipeline = CompVizPipeline.load(config_stream)
+        assert isinstance(pipeline, CompVizPipeline)
 
-    def test_create_pipeline_call(self):
-        unique_object = object()
-        with patch('ezcv.config.create_pipeline') as mock:
-            mock.return_value = unique_object
-            return_value = CompVizPipeline.load(get_config_stream())
-            mock.assert_called_with(yaml.safe_load(get_config_stream()))
-            assert return_value is unique_object
+    def test_operators_names(self, config_stream):
+        pipeline = CompVizPipeline.load(config_stream)
+        assert list(pipeline.operators.keys()) == ["op1", "op2"]
+
+    def test_operators_types(self, config_stream):
+        pipeline = CompVizPipeline.load(config_stream)
+        assert all(isinstance(op, TestOperator) for op in pipeline.operators.values())
+
+    def test_operators_params(self, config_stream):
+        pipeline = CompVizPipeline.load(config_stream)
+        ops = pipeline.operators
+        op1 = ops['op1']
+        op2 = ops['op2']
+        assert op1.param1 == OP1_PARAM1
+        assert op1.param2 == OP1_PARAM2
+        assert op2.param1 == OP2_PARAM1
+        assert op2.param2 == OP2_PARAM2
 
 
 class TestOperatorsProperty:
@@ -91,13 +118,11 @@ class TestOperatorsProperty:
         pipeline = CompVizPipeline()
         assert len(pipeline.operators) == 0
 
-    def test_pipeline_operators_indexable(self, config_stream):
-        pipeline = CompVizPipeline.load(config_stream)
+    def test_pipeline_operators_indexable(self, pipeline):
         _ = pipeline.operators['op1']
         _ = pipeline.operators['op2']
 
-    def test_pipeline_operators_invalid_name(self, config_stream):
-        pipeline = CompVizPipeline.load(config_stream)
+    def test_pipeline_operators_invalid_name(self, pipeline):
         with pytest.raises(KeyError):
             _ = pipeline.operators['invalid']
 
@@ -197,9 +222,9 @@ class TestGetOperatorName:
 
 class TestRun:
     @parametrize_img
-    @pytest.mark.parametrize('pipeline', [CompVizPipeline(), CompVizPipeline.load(get_config_stream())])
-    def test_return_type(self, img, pipeline):
-        r = pipeline.run(img)
+    @pytest.mark.parametrize('pipeline_', [CompVizPipeline(), CompVizPipeline.load(get_config_stream())])
+    def test_return_type(self, img, pipeline_):
+        r = pipeline_.run(img)
         assert isinstance(r, tuple)
         assert len(r) == 2
         out, ctx = r
@@ -215,16 +240,14 @@ class TestRun:
         assert_terms_in_exception(e, ['invalid', 'image'])
 
     @parametrize_img(kind='black')
-    def test_result(self, img, config_stream):
-        pipeline = CompVizPipeline.load(config_stream)
+    def test_result(self, img, pipeline):
         out, ctx = pipeline.run(img)
         assert np.all(out == 2)
 
     @parametrize_img
-    def test_run_all_ops(self, img, config_stream):
+    def test_run_all_ops(self, img, pipeline):
         with patch(__name__ + '.TestOperator.run') as mock:
             mock.side_effect = lambda i, _: i
-            pipeline = CompVizPipeline.load(config_stream)
             _ = pipeline.run(img)
             assert mock.call_count == 2
 
@@ -252,6 +275,70 @@ class TestRun:
 
         assert_terms_in_exception(e, ['return', 'invalid'])
 
+    @parametrize_img
+    def test_set_ctx_original_img(self, img):
+        class TestCtxOriginalImgOperator(Operator):
+            def run(self, img_: Image, ctx: PipelineContext) -> Image:
+                assert np.all(ctx.original_img == img_)
+                return img_
+
+        pipeline = CompVizPipeline()
+        pipeline.add_operator('test_op', TestCtxOriginalImgOperator())
+        pipeline.run(img)
+
+    def test_operator_cant_alter_original_img(self):
+        class TestCtxOriginalImg(Operator):
+            def run(self, img: Image, ctx: PipelineContext) -> Image:
+                original_img = ctx.original_img
+                original_img[10, ...] = 255
+                return img
+
+        pipeline = CompVizPipeline()
+        pipeline.add_operator('test_op', TestCtxOriginalImg())
+
+        test_img = build_img((128, 128), kind='black')
+        with pytest.raises(OperatorFailedError) as e:
+            pipeline.run(test_img)
+
+        assert_terms_in_exception(e, ['read-only'])
+
+    def test_add_info_works(self):
+        info_name = 'info_name'
+        info_value = object()
+
+        class TestCtxAddInfo(Operator):
+            def run(self, img: Image, ctx: PipelineContext) -> Image:
+                ctx.add_info(info_name, info_value)
+                return img
+
+        pipeline = CompVizPipeline()
+        op_name1 = 'test_op1'
+        pipeline.add_operator(op_name1, TestCtxAddInfo())
+        op_name2 = 'test_op2'
+        pipeline.add_operator(op_name2, TestCtxAddInfo())
+
+        _, returned_ctx = pipeline.run(build_img((16, 16)))
+
+        expected_info = {
+            op_name1: {
+                info_name: info_value
+            },
+            op_name2: {
+                info_name: info_value
+            }
+        }
+        actual_info = returned_ctx.info
+
+        assert actual_info == expected_info
+
+    def test_pipeline_run_empty_info(self, pipeline):
+        img = build_img((16, 16))
+        out, ctx = pipeline.run(img)
+        assert ctx.info == {
+            'op1': {},
+            'op2': {}
+        }
+
     def test_gray_only_flag(self):
         @settings.GRAY_ONLY(True)
         class TestOnlyGrayFlagOperator(Operator):
@@ -268,8 +355,7 @@ class TestRun:
 
 
 class TestHooks:
-    def test_hooks_order(self, config_stream):
-        pipeline = CompVizPipeline.load(config_stream)
+    def test_hooks_order(self, pipeline):
         call_count = 0
 
         class TestHook(PipelineHook):
@@ -325,123 +411,6 @@ class TestHooks:
         pipeline = CompVizPipeline()
         pipeline.add_operator('test', reference_operator)
         _ = pipeline.run(input_img, hooks=[hook])
-
-
-def test_pipeline_run_set_ctx_original_img():
-    img_rgb = build_img((128, 128), rgb=True)
-    img_gray = build_img((128, 128), rgb=False)
-
-    class TestCtxOriginalImgOperator(Operator):
-        def run(self, img: Image, ctx: PipelineContext) -> Image:
-            assert np.all(ctx.original_img == img)
-            return img
-
-    pipeline = CompVizPipeline()
-    pipeline.add_operator('test_op', TestCtxOriginalImgOperator())
-    pipeline.run(img_rgb)
-    pipeline.run(img_gray)
-
-
-def test_pipeline_run_cant_alter_original_img():
-    class TestCtxOriginalImg(Operator):
-        def run(self, img: Image, ctx: PipelineContext) -> Image:
-            original_img = ctx.original_img
-            original_img[10, ...] = 255
-            return img
-
-    pipeline = CompVizPipeline()
-    pipeline.add_operator('test_op', TestCtxOriginalImg())
-
-    test_img = build_img((128, 128), kind='black')
-    with pytest.raises(OperatorFailedError) as e:
-        pipeline.run(test_img)
-
-    assert_terms_in_exception(e, ['read-only'])
-
-
-def test_pipeline_run_add_info_works():
-    info_name = 'info_name'
-    info_value = object()
-
-    class TestCtxAddInfo(Operator):
-        def run(self, img: Image, ctx: PipelineContext) -> Image:
-            ctx.add_info(info_name, info_value)
-            return img
-
-    pipeline = CompVizPipeline()
-    op_name1 = 'test_op1'
-    pipeline.add_operator(op_name1, TestCtxAddInfo())
-    op_name2 = 'test_op2'
-    pipeline.add_operator(op_name2, TestCtxAddInfo())
-
-    _, returned_ctx = pipeline.run(build_img((16, 16)))
-
-    expected_info = {
-        op_name1: {
-            info_name: info_value
-        },
-        op_name2: {
-            info_name: info_value
-        }
-    }
-    actual_info = returned_ctx.info
-
-    assert actual_info == expected_info
-
-
-def test_pipeline_run_empty_info(config_stream):
-    pipeline = CompVizPipeline.load(config_stream)
-    img = build_img((16, 16))
-    out, ctx = pipeline.run(img)
-    assert ctx.info == {
-        'op1': {},
-        'op2': {}
-    }
-
-
-@parametrize_img(kind='black')
-def test_pipeline_integration(img):
-    # this test doesn't work if we can't blur something
-    if img.shape[:2] == (1, 1):
-        return
-
-    config = """
-        version: '0.0'
-        
-        pipeline:
-          - name: Blur1
-            config:
-              implementation: ezcv.operator.implementations.blur.GaussianBlur
-              params:
-                kernel_size: 3
-                sigma: 1.5
-          - name: Blur2
-            config:
-              implementation: ezcv.operator.implementations.blur.GaussianBlur
-              params:
-                kernel_size: 5
-                sigma: 1
-    """
-    stream = StringIO(config)
-    pipeline = CompVizPipeline.load(stream)
-
-    mid_index = img.shape[0] // 2
-    img[mid_index, ...] = 255
-    out, ctx = pipeline.run(img)
-    assert np.all(out[mid_index, ...] < 255)
-
-
-def test_pipeline_save_runs():
-    pipeline = CompVizPipeline()
-    pipeline.save(StringIO())
-
-
-def test_pipeline_save_writes():
-    pipeline = CompVizPipeline()
-    output_stream = Mock()
-    output_stream.write = Mock()
-    pipeline.save(output_stream)
-    output_stream.write.assert_called()
 
 
 @pytest.fixture

@@ -21,17 +21,15 @@ def parametrize_img(func: Callable = None, include_valid: bool = True, include_i
                     gray_only=False, kind='random'):
     shapes = []
     valid_sizes = [
-        (100, 100),
         (1, 1),
-        (4, 4),
-        (720, 1280),
-        (4, 1280),
-        (720, 4)
+        (16, 16),
+        (16, 1),
+        (1, 16)
     ]
     invalid_sizes = [
         (0, 0),
-        (100, 0),
-        (0, 100),
+        (16, 0),
+        (0, 16),
     ]
     if include_valid:
         shapes += valid_sizes

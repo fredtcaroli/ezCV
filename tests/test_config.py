@@ -4,8 +4,8 @@ import pytest
 
 from ezcv.config import create_operator, get_operator_config, ConfigParsingError, create_pipeline, \
     Config, get_pipeline_config
-from ezcv.operator.core.operator import Operator
-from ezcv.operator.core.parameter import IntegerParameter, DoubleParameter, ParameterSpec
+from ezcv.operator.operator import Operator
+from ezcv.operator.parameter import IntegerParameter, DoubleParameter, ParameterSpec
 from ezcv.pipeline import PipelineContext
 from ezcv.test_utils import assert_terms_in_exception
 from ezcv.typing import Image
