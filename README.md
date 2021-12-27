@@ -142,6 +142,8 @@ pipeline:
         method: binary
 ```
 
+If you want to see more examples of operators, visit the [ezCV operators library](https://github.com/fredtcaroli/ezCV-operators).
+
 ##### More Complex Use Cases
 
 We have one more example to go. In this example we'll show how to:
