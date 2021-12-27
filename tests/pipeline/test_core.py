@@ -10,7 +10,8 @@ from ezcv import CompVizPipeline
 from ezcv.operator import Operator, IntegerParameter, DoubleParameter
 from ezcv.operator.core import settings
 from ezcv.pipeline.context import PipelineContext
-from ezcv.pipeline.core import OperatorFailedError, BadImageError
+from ezcv.exceptions import OperatorFailedError, BadImageError
+from ezcv.pipeline.hooks import PipelineHook
 from ezcv.test_utils import build_img, parametrize_img, assert_terms_in_exception
 from ezcv.typing import Image
 from ezcv.utils import is_image
@@ -264,6 +265,66 @@ class TestRun:
             pipeline.run(build_img((16, 16), rgb=True))
 
         assert_terms_in_exception(e, ["expect", "gray"])
+
+
+class TestHooks:
+    def test_hooks_order(self, config_stream):
+        pipeline = CompVizPipeline.load(config_stream)
+        call_count = 0
+
+        class TestHook(PipelineHook):
+            def before_pipeline(self, ctx: PipelineContext):
+                nonlocal call_count
+                assert call_count == 0
+                call_count += 1
+
+            def before_operator(self, operator: Operator, img: Image, ctx: PipelineContext):
+                nonlocal call_count
+                assert call_count in (1, 3)
+                call_count += 1
+
+            def after_operator(self, operator: Operator, img: Image, ctx: PipelineContext):
+                nonlocal call_count
+                assert call_count in (2, 4)
+                call_count += 1
+
+            def after_pipeline(self, img: Image, ctx: PipelineContext):
+                nonlocal call_count
+                assert call_count == 5
+                call_count += 1
+
+        img = build_img((16, 16))
+        _ = pipeline.run(img, hooks=[TestHook()])
+
+        assert call_count == 6
+
+    def test_parameters(self):
+        input_img = build_img((16, 16))
+        reference_img = build_img((36, 36))
+
+        class ReferenceImgOperator(Operator):
+            def run(self, img: Image, ctx: PipelineContext) -> Image:
+                return reference_img
+
+        reference_operator = ReferenceImgOperator()
+
+        class TestHook(PipelineHook):
+            def before_operator(self, operator: Operator, img: Image, ctx: PipelineContext):
+                assert img is input_img
+                assert operator is reference_operator
+
+            def after_operator(self, operator: Operator, img: Image, ctx: PipelineContext):
+                assert img is reference_img
+                assert operator is reference_operator
+
+            def after_pipeline(self, img: Image, ctx: PipelineContext):
+                assert img is reference_img
+
+        hook = TestHook()
+
+        pipeline = CompVizPipeline()
+        pipeline.add_operator('test', reference_operator)
+        _ = pipeline.run(input_img, hooks=[hook])
 
 
 def test_pipeline_run_set_ctx_original_img():

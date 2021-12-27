@@ -27,7 +27,6 @@ class OperatorSettingsMixin:
     @classmethod
     def get(cls, setting: OperatorSetting[_T]) -> _T:
         if not cls.__is_settings_initialized() or setting not in cls.__settings:
-            print('Returning default', cls.__dict__)
             return setting.default_value
         return cls.__settings[setting]
 

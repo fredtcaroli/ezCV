@@ -4,8 +4,9 @@ import yaml
 
 import ezcv.operator as op_lib
 from ezcv import utils
+from ezcv.exceptions import OperatorFailedError, BadImageError
 from ezcv.pipeline.context import PipelineContext
-from ezcv.operator.core import settings
+from ezcv.pipeline.hooks import PipelineHook, GrayOnlyHook
 from ezcv.typing import Image
 
 
@@ -13,24 +14,30 @@ class CompVizPipeline(object):
     def __init__(self):
         self._operators: Dict[str, op_lib.Operator] = dict()
         self._operators_order: List[str] = list()
+        self._default_hooks: List[PipelineHook] = [
+            GrayOnlyHook()
+        ]
 
     @property
     def operators(self) -> Dict[str, op_lib.Operator]:
         return {op_name: self._operators[op_name] for op_name in self._operators_order}
 
-    def run(self, img: Image) -> Tuple[Image, PipelineContext]:
+    def run(self, img: Image, hooks: Optional[List[PipelineHook]] = None) -> Tuple[Image, PipelineContext]:
+        hooks = self._default_hooks + (hooks or [])
         _raise_if_invalid_img(img)
         last = img
         ctx = PipelineContext(img)
+        _run_hooks('before_pipeline', hooks, ctx=ctx)
         for name, operator in self.operators.items():
-            if operator.get(settings.GRAY_ONLY) is True and last.ndim > 2:
-                raise OperatorFailedError(f'Operator {name} expects a gray image')
+            _run_hooks('before_operator', hooks, operator=operator, img=last, ctx=ctx)
             with ctx.scope(name):
                 try:
                     last = operator.run(last, ctx)
                 except Exception as e:
                     raise OperatorFailedError(f'Operator {name} failed to run with message "{e}"') from e
             _raise_if_invalid_img(last, returned_from=name)
+            _run_hooks('after_operator', hooks, operator=operator, img=last, ctx=ctx)
+        _run_hooks('after_pipeline', hooks, img=last, ctx=ctx)
         return last, ctx
 
     def add_operator(self, name: str, operator: op_lib.Operator):
@@ -111,9 +118,6 @@ def _raise_if_invalid_img(img: Image, returned_from: Optional[str] = None):
         raise BadImageError(message)
 
 
-class OperatorFailedError(Exception):
-    pass
-
-
-class BadImageError(Exception):
-    pass
+def _run_hooks(method: str, hooks: List[PipelineHook], **kwargs):
+    for hook in hooks:
+        getattr(hook, method)(**kwargs)
